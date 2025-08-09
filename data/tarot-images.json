@@ -1,0 +1,548 @@
+[
+  {
+    "id": 0,
+    "name": "The Fool",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m00.jpg"
+  },
+  {
+    "id": 1,
+    "name": "The Magician",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m01.jpg"
+  },
+  {
+    "id": 2,
+    "name": "The High Priestess",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m02.jpg"
+  },
+  {
+    "id": 3,
+    "name": "The Empress",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m03.jpg"
+  },
+  {
+    "id": 4,
+    "name": "The Emperor",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m04.jpg"
+  },
+  {
+    "id": 5,
+    "name": "The Hierophant",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m05.jpg"
+  },
+  {
+    "id": 6,
+    "name": "The Lovers",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m06.jpg"
+  },
+  {
+    "id": 7,
+    "name": "The Chariot",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m07.jpg"
+  },
+  {
+    "id": 8,
+    "name": "Strength",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m08.jpg"
+  },
+  {
+    "id": 9,
+    "name": "The Hermit",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m09.jpg"
+  },
+  {
+    "id": 10,
+    "name": "Wheel of Fortune",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m10.jpg"
+  },
+  {
+    "id": 11,
+    "name": "Justice",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m11.jpg"
+  },
+  {
+    "id": 12,
+    "name": "The Hanged Man",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m12.jpg"
+  },
+  {
+    "id": 13,
+    "name": "Death",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m13.jpg"
+  },
+  {
+    "id": 14,
+    "name": "Temperance",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m14.jpg"
+  },
+  {
+    "id": 15,
+    "name": "The Devil",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m15.jpg"
+  },
+  {
+    "id": 16,
+    "name": "The Tower",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m16.jpg"
+  },
+  {
+    "id": 17,
+    "name": "The Star",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m17.jpg"
+  },
+  {
+    "id": 18,
+    "name": "The Moon",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m18.jpg"
+  },
+  {
+    "id": 19,
+    "name": "The Sun",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m19.jpg"
+  },
+  {
+    "id": 20,
+    "name": "Judgement",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m20.jpg"
+  },
+  {
+    "id": 21,
+    "name": "The World",
+    "arcana": "Major Arcana",
+    "suit": null,
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/m21.jpg"
+  },
+  {
+    "id": 22,
+    "name": "Ace of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c01.jpg"
+  },
+  {
+    "id": 23,
+    "name": "Two of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c02.jpg"
+  },
+  {
+    "id": 24,
+    "name": "Three of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c03.jpg"
+  },
+  {
+    "id": 25,
+    "name": "Four of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c04.jpg"
+  },
+  {
+    "id": 26,
+    "name": "Five of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c05.jpg"
+  },
+  {
+    "id": 27,
+    "name": "Six of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c06.jpg"
+  },
+  {
+    "id": 28,
+    "name": "Seven of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c07.jpg"
+  },
+  {
+    "id": 29,
+    "name": "Eight of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c08.jpg"
+  },
+  {
+    "id": 30,
+    "name": "Nine of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c09.jpg"
+  },
+  {
+    "id": 31,
+    "name": "Ten of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c10.jpg"
+  },
+  {
+    "id": 32,
+    "name": "Page of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c11.jpg"
+  },
+  {
+    "id": 33,
+    "name": "Knight of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c12.jpg"
+  },
+  {
+    "id": 34,
+    "name": "Queen of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c13.jpg"
+  },
+  {
+    "id": 35,
+    "name": "King of Cups",
+    "arcana": "Minor Arcana",
+    "suit": "Cups",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/c14.jpg"
+  },
+  {
+    "id": 36,
+    "name": "Ace of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s01.jpg"
+  },
+  {
+    "id": 37,
+    "name": "Two of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s02.jpg"
+  },
+  {
+    "id": 38,
+    "name": "Three of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s03.jpg"
+  },
+  {
+    "id": 39,
+    "name": "Four of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s04.jpg"
+  },
+  {
+    "id": 40,
+    "name": "Five of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s05.jpg"
+  },
+  {
+    "id": 41,
+    "name": "Six of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s06.jpg"
+  },
+  {
+    "id": 42,
+    "name": "Seven of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s07.jpg"
+  },
+  {
+    "id": 43,
+    "name": "Eight of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s08.jpg"
+  },
+  {
+    "id": 44,
+    "name": "Nine of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s09.jpg"
+  },
+  {
+    "id": 45,
+    "name": "Ten of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s10.jpg"
+  },
+  {
+    "id": 46,
+    "name": "Page of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s11.jpg"
+  },
+  {
+    "id": 47,
+    "name": "Knight of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s12.jpg"
+  },
+  {
+    "id": 48,
+    "name": "Queen of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s13.jpg"
+  },
+  {
+    "id": 49,
+    "name": "King of Swords",
+    "arcana": "Minor Arcana",
+    "suit": "Swords",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/s14.jpg"
+  },
+  {
+    "id": 50,
+    "name": "Ace of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w01.jpg"
+  },
+  {
+    "id": 51,
+    "name": "Two of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w02.jpg"
+  },
+  {
+    "id": 52,
+    "name": "Three of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w03.jpg"
+  },
+  {
+    "id": 53,
+    "name": "Four of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w04.jpg"
+  },
+  {
+    "id": 54,
+    "name": "Five of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w05.jpg"
+  },
+  {
+    "id": 55,
+    "name": "Six of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w06.jpg"
+  },
+  {
+    "id": 56,
+    "name": "Seven of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w07.jpg"
+  },
+  {
+    "id": 57,
+    "name": "Eight of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w08.jpg"
+  },
+  {
+    "id": 58,
+    "name": "Nine of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w09.jpg"
+  },
+  {
+    "id": 59,
+    "name": "Ten of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w10.jpg"
+  },
+  {
+    "id": 60,
+    "name": "Page of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w11.jpg"
+  },
+  {
+    "id": 61,
+    "name": "Knight of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w12.jpg"
+  },
+  {
+    "id": 62,
+    "name": "Queen of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w13.jpg"
+  },
+  {
+    "id": 63,
+    "name": "King of Wands",
+    "arcana": "Minor Arcana",
+    "suit": "Wands",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/w14.jpg"
+  },
+  {
+    "id": 64,
+    "name": "Ace of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p01.jpg"
+  },
+  {
+    "id": 65,
+    "name": "Two of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p02.jpg"
+  },
+  {
+    "id": 66,
+    "name": "Three of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p03.jpg"
+  },
+  {
+    "id": 67,
+    "name": "Four of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p04.jpg"
+  },
+  {
+    "id": 68,
+    "name": "Five of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p05.jpg"
+  },
+  {
+    "id": 69,
+    "name": "Six of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p06.jpg"
+  },
+  {
+    "id": 70,
+    "name": "Seven of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p07.jpg"
+  },
+  {
+    "id": 71,
+    "name": "Eight of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p08.jpg"
+  },
+  {
+    "id": 72,
+    "name": "Nine of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p09.jpg"
+  },
+  {
+    "id": 73,
+    "name": "Ten of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p10.jpg"
+  },
+  {
+    "id": 74,
+    "name": "Page of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p11.jpg"
+  },
+  {
+    "id": 75,
+    "name": "Knight of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p12.jpg"
+  },
+  {
+    "id": 76,
+    "name": "Queen of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p13.jpg"
+  },
+  {
+    "id": 77,
+    "name": "King of Pentacles",
+    "arcana": "Minor Arcana",
+    "suit": "Pentacles",
+    "image_url": "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/p14.jpg"
+  }
+]

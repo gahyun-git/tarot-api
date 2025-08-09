@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    ports:
+      - "8008:8008"
+    environment:
+      - ENV=local
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+      - DATA_PATH=data/tarot-images.json
+    volumes:
+      - ./:/app
+    restart: unless-stopped
