@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: tarot-api
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health/
+    region: oregon
+    envVars:
+      - key: ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: CORS_ORIGINS
+        value: https://your-frontend.example
+      - key: DATA_PATH
+        value: data/tarot-images.json
