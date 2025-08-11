@@ -21,6 +21,7 @@ router = APIRouter(prefix="/reading", tags=["reading"])
 
 
 @router.post("/", response_model=ReadingResponse, dependencies=[Depends(require_api_auth)])
+@router.post("", response_model=ReadingResponse, dependencies=[Depends(require_api_auth)])
 @limiter.limit(settings.rate_limit_reading_post)
 def reading(request: Request, deck = Depends(get_deck_loader), repo = Depends(get_reading_repo), payload: ReadingRequest | None = None):
     # FastAPI가 자동으로 JSON body를 ReadingRequest로 파싱
@@ -48,6 +49,7 @@ def get_reading(request: Request, reading_id: str, repo = Depends(get_reading_re
 
 
 @router.post("/{reading_id}/interpret", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
+@router.post("/{reading_id}/interpret/", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
 @limiter.limit(settings.rate_limit_reading_post)
 def interpret_reading(request: Request, reading_id: str, payload: InterpretRequest, repo = Depends(get_reading_repo)):
     found = repo.get(reading_id)
@@ -70,6 +72,7 @@ def interpret_reading(request: Request, reading_id: str, payload: InterpretReque
 
 
 @router.get("/{reading_id}/result", response_model=FullReadingResult)
+@router.get("/{reading_id}/result/", response_model=FullReadingResult)
 @limiter.limit(settings.rate_limit_cards)
 def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False, repo = Depends(get_reading_repo)):
     found = repo.get(reading_id)
