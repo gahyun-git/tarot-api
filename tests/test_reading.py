@@ -32,4 +32,29 @@ def test_reading_seed_stability():
     }
     r1 = client.post("/reading/", json=payload).json()
     r2 = client.post("/reading/", json=payload).json()
-    assert r1 == r2
+    # id는 매 요청마다 달라질 수 있으므로 제외하고 비교
+    r1_no_id = {k: v for k, v in r1.items() if k != "id"}
+    r2_no_id = {k: v for k, v in r2.items() if k != "id"}
+    assert r1_no_id == r2_no_id
+
+
+def test_reading_create_and_get():
+    client = TestClient(app)
+    payload = {
+        "question": "저장 후 조회",
+        "group_order": ["A", "B", "C"],
+        "shuffle_times": 1,
+        "seed": 42,
+        "allow_reversed": True,
+    }
+    created = client.post("/reading/", json=payload).json()
+    assert created.get("id")
+    rid = created["id"]
+    got = client.get(f"/reading/{rid}").json()
+    assert got == created
+
+
+def test_reading_get_not_found():
+    client = TestClient(app)
+    resp = client.get("/reading/00000000-0000-0000-0000-000000000000")
+    assert resp.status_code == 404

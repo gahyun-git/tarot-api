@@ -8,10 +8,35 @@ services:
     region: oregon
     envVars:
       - key: ENV
-        value: production
+        value: prod
       - key: LOG_LEVEL
         value: INFO
       - key: CORS_ORIGINS
-        value: https://your-frontend.example
+        value: '["https://<pages>.pages.dev","https://www.go4it.site","https://go4it.site"]'
       - key: DATA_PATH
         value: data/tarot-images.json
+      - key: MEANINGS_PATH
+        value: data/meanings.ko.json
+      - key: PREFER_LOCAL_IMAGES
+        value: "true"
+      - key: RATE_LIMIT_DEFAULT
+        value: 60/minute
+      - key: RATE_LIMIT_HEALTH
+        value: 5/second
+      - key: RATE_LIMIT_CARDS
+        value: 120/minute
+      - key: RATE_LIMIT_READING_POST
+        value: 10/minute
+      - key: AUTH_REQUIRED
+        value: "true"
+      # choose one of the following auth methods
+      #- key: API_KEY
+      #  value: <set-in-Render-dashboard>
+      #- key: HMAC_SECRET
+      #  value: <set-in-Render-dashboard>
+      #- key: REDIS_URL
+      #  value: redis://<optional>
+      #- key: GOOGLE_API_KEY
+      #  value: <optional>
+      - key: MAX_BODY_BYTES
+        value: "65536"

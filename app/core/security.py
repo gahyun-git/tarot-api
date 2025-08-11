@@ -1,6 +1,12 @@
+import hmac
+import hashlib
+import time
+from typing import Callable
+from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from starlette.responses import Response
+from app.core.config import settings
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
@@ -14,3 +20,34 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("Referrer-Policy", "no-referrer")
         response.headers.setdefault("X-XSS-Protection", "0")
         return response
+
+
+def _consteq(a: str, b: str) -> bool:
+    return hmac.compare_digest(a.encode(), b.encode())
+
+
+async def require_api_auth(request: Request) -> None:
+    if not settings.auth_required:
+        return
+    # API Key check
+    api_key_req = request.headers.get("x-api-key")
+    if settings.api_key and api_key_req and _consteq(api_key_req, settings.api_key):
+        return
+    # HMAC check
+    cid = request.headers.get("x-client-id")
+    ts = request.headers.get("x-timestamp")
+    sig = request.headers.get("x-signature")
+    if not (cid and ts and sig and settings.hmac_secret):
+        raise HTTPException(status_code=401, detail="unauthorized")
+    try:
+        ts_int = int(ts)
+    except Exception:
+        raise HTTPException(status_code=401, detail="invalid timestamp")
+    if abs(int(time.time() * 1000) - ts_int) > 5 * 60 * 1000:
+        raise HTTPException(status_code=401, detail="stale request")
+    body = await request.body()
+    body_hash = hashlib.sha256(body).hexdigest()
+    base = f"{request.method}\n{request.url.path}\n{ts}\n{body_hash}"
+    calc = hmac.new(settings.hmac_secret.encode(), base.encode(), hashlib.sha256).hexdigest()
+    if not _consteq(calc, sig):
+        raise HTTPException(status_code=401, detail="bad signature")

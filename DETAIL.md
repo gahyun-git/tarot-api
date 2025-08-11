@@ -1,4 +1,5 @@
 # 코드작성은 설계원칙, SOLID원칙을 지키며, 클린코드 기반으로 한다. 
+# 이 프로젝트 폴더 내에서는 백엔드 작업만 한다.
 
 # 0) 목표 정의
 
@@ -47,6 +48,37 @@
 
   * 1차: 저장 없음(메모리) → 2차: Postgres(Supabase)로 `readings`, `reading_cards`, (옵션) `interpretations`
 
+# 3-1) 백엔드 진행상태
+
+## 완료
+
+- [x] 앱 초기화: `FastAPI` 앱 생성, `setup_logging` 적용, 버전/타이틀 설정
+- [x] 미들웨어: `CORS`(env 기반), `request_id` 부여/로그, `SlowAPI` 레이트리밋, 보안 헤더(`X-Content-Type-Options` 등)
+- [x] 에러 처리: 전역 Exception/Validation 핸들러(JSON 구조화, `request_id` 포함)
+- [x] 데이터 로딩: `DeckLoader`로 `data/tarot-images.json` 지연 로드+메모리 캐시(78장 확인 경고)
+- [x] 유틸: 재현성 가능한 셔플(`fisher_yates_shuffle_with_rng` + `seed`)
+- [x] 서비스: 78장→3그룹 분할→사용자 순서 병합→N회 셔플→8장 드로우(정/역방향 옵션)
+- [x] 스키마: `Card`, `CardsResponse`, `ReadingRequest/Response`, `DrawnCard`(검증 포함)
+- [x] 라우터:
+  - `GET /health/` (버스트 레이트리밋 5/sec)
+  - `GET /cards/` (전체 카드 메타 반환)
+  - `POST /reading/` (질문/그룹순서/섞기횟수/seed/역방향 → 8장 결과)
+- [x] 테스트: health/cards/reading 기본·재현성·검증, observability(요청 ID 헤더)
+- [x] 설정: `.env` 기반 `ENV/LOG_LEVEL/CORS_ORIGINS/DATA_PATH` 지원
+- [x] 배포 준비물: `Dockerfile`, `docker-compose.yml`, `render.yaml`
+
+## 진행해야 할 것
+
+- [ ] 운영 CORS 원본 확정 및 `CORS_ORIGINS` 환경변수 설정(Cloudflare Pages 도메인 포함)
+- [x] 엔드포인트별 레이트리밋 정책 세분화(예: `POST /reading` 10/min/IP, `GET /cards` 120/min/IP)
+- [x] 관측성 강화: 구조화 로그 필드(`request_id`, `client_ip`, `duration_ms`) 추가
+- [x] 성능: 콜드스타트 방지용 Deck 예열 로딩
+- [ ] 스키마 i18n 대비(의미 필드 키 기반 확장 설계) 및 `upright/reversed_meaning` 데이터 소스 확정
+- [x] 1차 영속화(인메모리): `ReadingRepository` 추가, `POST /reading` 저장 + `GET /reading/{id}` 조회
+- [ ] DB 단계(2차): Postgres(Supabase) 스키마 설계/마이그레이션(`readings`, `reading_cards`), TTL/익명세션, `GET /reading/{id}` 유지
+- [ ] (옵션) LLM 해석 API 설계/구현: `POST /reading/{id}/interpret`(레이트리밋/서명/감사 로그)
+- [ ] 배포: Render 환경변수 세팅(`CORS_ORIGINS`, `DATA_PATH` 등) 및 헬스체크/오토스케일 파라미터 점검
+
 # 4) 해석(옵션 단계)
 
 * **LLM 없이도 동작**: `meaning_up/meaning_rev` 출력
@@ -63,6 +95,14 @@
 * **이미지 서빙**: 프런트가 `img` URL 직접 로드(백엔드는 URL만 전달)
 * **운영 체크**: CORS, Rate-limit(slowapi), 로그(PII 주의), 헬스체크, 에러 핸들링
 * **형상관리**: 모노레포기반 작업, 더좋은 방법있으면 진행가능.
+'마지막 액션
+Cloudflare
+새 Pages 프로젝트를 tarot-front 레포로 연결
+GitHub Secrets 설정:
+CF_API_TOKEN, CF_ACCOUNT_ID, NEXT_PUBLIC_API_BASE_URL(백엔드 Render URL)
+배포 트리거 후 Pages 도메인을 CORS에 추가(백엔드 CORS_ORIGINS)'
+
+
 # 6) 폴더/레포 템플릿
 
 ```

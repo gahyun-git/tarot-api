@@ -38,7 +38,44 @@ class DrawnCard(BaseModel):
 
 
 class ReadingResponse(BaseModel):
+    id: Optional[str] = None
     question: str
     order: List[GroupOrder]
     count: int
     items: list[DrawnCard]
+
+
+class InterpretRequest(BaseModel):
+    lang: str = Field(default="ko", pattern="^(ko|en|ja|auto)$")
+    style: str = Field(default="concise")
+    use_llm: bool = Field(default=False)
+
+
+class InterpretResponse(BaseModel):
+    id: str
+    lang: str
+    summary: str
+    positions: list[str]
+    advices: list[str]
+    llm_used: bool
+    sections: Optional[dict[str, dict[str, str]]] = None  # { role: { card, orientation, analysis } }
+
+
+class CardWithContext(BaseModel):
+    position: int
+    role: str
+    is_reversed: bool
+    used_meanings: Optional[List[str]] = None
+    card: Card
+    llm_detail: Optional[str] = None
+
+
+class FullReadingResult(BaseModel):
+    id: str
+    question: str
+    lang: str
+    items: list[CardWithContext]
+    summary: str
+    advices: list[str]
+    llm_used: bool
+    sections: Optional[dict[str, dict[str, str]]] = None

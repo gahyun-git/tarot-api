@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class Card(BaseModel):
@@ -8,8 +8,8 @@ class Card(BaseModel):
     arcana: str
     suit: Optional[str] = None
     image_url: Optional[str] = None
-    upright_meaning: Optional[str] = None
-    reversed_meaning: Optional[str] = None
+    upright_meaning: Optional[List[str]] = None
+    reversed_meaning: Optional[List[str]] = None
 
 
 class CardsResponse(BaseModel):

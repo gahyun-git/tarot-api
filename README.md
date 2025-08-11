@@ -3,21 +3,30 @@
 FastAPI 기반의 타로 리딩 API.
 
 ### 빠른 시작
-1) Poetry 설치 후 의존성 설치:
+1) 가상환경/의존성 설치:
 ```
-poetry install
+python3 -m venv .venv && source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
 ```
-2) 개발 서버 실행:
+2) 환경 변수 준비: 프로젝트 루트에 `.env` 생성 (`.env.example` 참고)
+3) 개발 서버 실행:
 ```
-poetry run uvicorn app.main:app --reload
+uvicorn app.main:app --reload
 ```
-3) 테스트:
+4) 테스트:
 ```
-poetry run pytest
+pytest
 ```
 
 ### 환경 변수
-`.env.example`를 참고해 `.env`를 루트에 생성하세요.
+- `ENV`: 실행 환경(`local|dev|prod`). dev/prod에서는 `CORS_ORIGINS` 필수
+- `LOG_LEVEL`: 로깅 레벨
+- `CORS_ORIGINS`: 허용 오리진(쉼표구분). 예: https://your.pages.dev,https://www.example.com
+- `DATA_PATH`: 카드 데이터 경로
+- `RATE_LIMIT_*`: 레이트리밋 정책 조정
+- `USE_DB`: true 시 DB 리포지토리 사용
+- `DB_URL`: Postgres 연결 문자열 (예: `postgresql://user:pass@host:5432/db`)
 
 ### 컨테이너 실행
 - Docker:
