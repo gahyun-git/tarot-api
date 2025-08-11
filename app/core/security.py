@@ -47,7 +47,11 @@ async def require_api_auth(request: Request) -> None:
         raise HTTPException(status_code=401, detail="stale request")
     body = await request.body()
     body_hash = hashlib.sha256(body).hexdigest()
-    base = f"{request.method}\n{request.url.path}\n{ts}\n{body_hash}"
+    # Canonicalize path to avoid signature mismatches due to trailing slashes
+    path = request.url.path
+    if path != "/" and path.endswith("/"):
+        path = path[:-1]
+    base = f"{request.method}\n{path}\n{ts}\n{body_hash}"
     calc = hmac.new(settings.hmac_secret.encode(), base.encode(), hashlib.sha256).hexdigest()
     if not _consteq(calc, sig):
         raise HTTPException(status_code=401, detail="bad signature")
