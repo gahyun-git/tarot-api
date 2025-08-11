@@ -16,4 +16,4 @@ COPY . .
 
 EXPOSE 8008
 # Respect Render/containers PORT env if provided; default to 8008 for local
-CMD ["bash","-lc","poetry run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8008}"]
+CMD ["bash","-lc","poetry run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8008} --access-log"]
