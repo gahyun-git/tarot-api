@@ -16,6 +16,9 @@ pydantic = ">=2.7.0"
 pydantic-settings = ">=2.3.0"
 httpx = ">=0.27.0"
 slowapi = ">=0.1.9"
+psycopg = { version = ">=3.2.0", extras = ["binary"] }
+Pillow = ">=10.0.0"
+google-generativeai = ">=0.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.2.0"

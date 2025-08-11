@@ -14,5 +14,6 @@ RUN poetry install --no-interaction --no-ansi
 
 COPY . .
 
-EXPOSE 9000
-CMD ["poetry","run","uvicorn","app.main:app","--host","0.0.0.0","--port","8008"]
+EXPOSE 8008
+# Respect Render/containers PORT env if provided; default to 8008 for local
+CMD ["bash","-lc","poetry run uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8008}"]
