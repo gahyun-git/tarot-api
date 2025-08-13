@@ -9,6 +9,9 @@ from app.schemas.reading import (
     InterpretResponse,
     FullReadingResult,
     CardWithContext,
+    DailyFortuneResponse,
+    SpreadsResponse,
+    SpreadInfo,
 )
 from app.schemas.cards import Card
 from app.services.reading_service import create_reading
@@ -16,6 +19,8 @@ from app.core.rate_limit import limiter
 from app.core.config import settings
 from app.services.interpret_service import interpret_local, interpret_with_llm, detect_lang, explain_cards_with_llm
 from app.core.security import require_api_auth
+from datetime import datetime, timezone
+import random
 
 router = APIRouter(prefix="/reading", tags=["reading"])
 
@@ -123,3 +128,55 @@ def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm
             if i < len(items):
                 items[i].llm_detail = d
     return FullReadingResult(id=found.id or "", question=found.question, lang=lang_norm, items=items, summary=interp.summary, advices=interp.advices, llm_used=interp.llm_used, sections=getattr(interp, "sections", None))
+
+
+@router.get("/daily", response_model=DailyFortuneResponse)
+@router.get("/daily/", response_model=DailyFortuneResponse)
+@limiter.limit(settings.rate_limit_cards)
+def daily_fortune(request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False, deck = Depends(get_deck_loader)):
+    # 오늘 날짜 고정 + 선택적 시드로 재현 가능
+    today = datetime.now(timezone.utc).date().isoformat()
+    rng = random.Random(seed)
+    cards = deck.cards
+    if not cards:
+        raise HTTPException(status_code=500, detail="deck not loaded")
+    # 한 장 뽑기
+    picked = rng.choice(cards)
+    is_reversed = bool(rng.randint(0, 1))
+    # 언어 정규화
+    q = "오늘의 총운"
+    lang_norm = detect_lang(q) if lang == "auto" else lang
+    # 역할/의미 구성
+    roles_ko = {1: "이슈"}
+    roles_en = {1: "Issue"}
+    roles_ja = {1: "課題"}
+    roles_zh = {1: "议题"}
+    lang_key = (lang_norm or "en").lower()
+    role_map = roles_zh if lang_key.startswith("zh") else roles_ko if lang_key == "ko" else roles_ja if lang_key == "ja" else roles_en
+    m = deck.get_meanings(int(picked.get("id")), lang_norm, is_reversed)
+    card_ctx = CardWithContext(
+        position=1,
+        role=role_map.get(1, ""),
+        is_reversed=is_reversed,
+        used_meanings=(m[:3] if m else None),
+        card=Card(**picked),
+    )
+    # 요약: LLM 사용 여부에 따라 분기
+    dummy_reading = ReadingResponse(id="", question=q, order=[], count=1, items=[DrawnCard(position=1, is_reversed=is_reversed, card=Card(**picked))])
+    if use_llm and settings.google_api_key:
+        interp = interpret_with_llm(dummy_reading, lang_norm, settings.google_api_key)
+    else:
+        interp = interpret_local(dummy_reading, lang_norm)
+    return DailyFortuneResponse(date=today, lang=lang_norm, card=card_ctx, summary=interp.summary, llm_used=interp.llm_used)
+
+
+@router.get("/spreads", response_model=SpreadsResponse)
+@limiter.limit(settings.rate_limit_cards)
+def list_spreads(request: Request):
+    # 기본 8장 스프레드와 1장(오늘의 운세)
+    items = [
+        SpreadInfo(code="daily", name="Daily One Card", positions={1: "Issue"}).model_dump(),
+        SpreadInfo(code="8-basic", name="Eight Positions", positions={1: "Issue", 2: "Hidden Influence", 3: "Past", 4: "Present", 5: "Near Future", 6: "Inner", 7: "Outer", 8: "Solution"}).model_dump(),
+    ]
+    from fastapi.responses import JSONResponse
+    return JSONResponse(content={"items": items})

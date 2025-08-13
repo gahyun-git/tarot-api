@@ -79,3 +79,21 @@ class FullReadingResult(BaseModel):
     advices: list[str]
     llm_used: bool
     sections: Optional[dict[str, dict[str, str]]] = None
+
+
+class DailyFortuneResponse(BaseModel):
+    date: str
+    lang: str
+    card: CardWithContext
+    summary: str
+    llm_used: bool
+
+
+class SpreadInfo(BaseModel):
+    code: str
+    name: str
+    positions: dict[int, str]
+
+
+class SpreadsResponse(BaseModel):
+    items: list[SpreadInfo]

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
 from app.core.deps import get_deck_loader
-from app.schemas.cards import CardsResponse, Card
+from app.schemas.cards import CardsResponse, Card, CardMeaningsResponse
 from app.core.rate_limit import limiter
 from app.core.config import settings
 
@@ -32,3 +32,21 @@ def get_card(request: Request, card_id: int, deck = Depends(get_deck_loader)):
         if c.get("id") == card_id:
             return Card(**c)
     raise HTTPException(status_code=404, detail="card not found")
+
+
+@router.get("/{card_id}/meanings", response_model=CardMeaningsResponse)
+@limiter.limit(settings.rate_limit_cards)
+def get_card_meanings(request: Request, card_id: int, lang: str = "auto", deck = Depends(get_deck_loader)):
+    # 언어 정규화: 카드 이름으로는 감지하기 어려워 기본 ko
+    lang_norm = "ko" if lang == "auto" else lang
+    # 카드 존재 확인
+    target = None
+    for c in deck.cards:
+        if c.get("id") == card_id:
+            target = c
+            break
+    if target is None:
+        raise HTTPException(status_code=404, detail="card not found")
+    up = deck.get_meanings(card_id, lang_norm, False) or []
+    rv = deck.get_meanings(card_id, lang_norm, True) or []
+    return CardMeaningsResponse(id=card_id, lang=lang_norm, upright=up, reversed=rv)

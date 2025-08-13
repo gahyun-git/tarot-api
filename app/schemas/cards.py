@@ -15,3 +15,10 @@ class Card(BaseModel):
 class CardsResponse(BaseModel):
     total: int
     items: list[Card]
+
+
+class CardMeaningsResponse(BaseModel):
+    id: int
+    lang: str
+    upright: List[str]
+    reversed: List[str]
