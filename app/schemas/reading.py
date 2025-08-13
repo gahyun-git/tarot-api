@@ -46,7 +46,7 @@ class ReadingResponse(BaseModel):
 
 
 class InterpretRequest(BaseModel):
-    lang: str = Field(default="ko", pattern="^(ko|en|ja|auto)$")
+    lang: str = Field(default="ko", pattern="^(ko|en|ja|zh|auto)$")
     style: str = Field(default="concise")
     use_llm: bool = Field(default=False)
 

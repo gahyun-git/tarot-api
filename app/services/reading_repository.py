@@ -16,6 +16,7 @@ class ReadingRepository:
         self._store: Dict[str, ReadingResponse] = {}
         self._lock = threading.Lock()
         self._interpretations: Dict[Tuple[str, str, str, bool], InterpretResponse] = {}
+        self._details: Dict[Tuple[str, str, bool], List[str]] = {}
 
     def create(self, reading: ReadingResponse) -> str:
         reading_id = str(uuid.uuid4())
@@ -38,6 +39,17 @@ class ReadingRepository:
         key = (data.id, lang, style, use_llm)
         with self._lock:
             self._interpretations[key] = data
+
+    # --- per-card details cache (LLM) ---
+    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> Optional[List[str]]:
+        key = (reading_id, lang, use_llm)
+        with self._lock:
+            return self._details.get(key)
+
+    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: List[str]) -> None:
+        key = (reading_id, lang, use_llm)
+        with self._lock:
+            self._details[key] = list(details)
 
 
 class PostgresReadingRepository:
@@ -79,11 +91,23 @@ class PostgresReadingRepository:
             UNIQUE (reading_id, lang, style, use_llm)
         );
         """
+        ddl_details = """
+        CREATE TABLE IF NOT EXISTS interpretation_details (
+            id BIGSERIAL PRIMARY KEY,
+            reading_id UUID REFERENCES readings(id) ON DELETE CASCADE,
+            lang TEXT NOT NULL,
+            use_llm BOOLEAN NOT NULL,
+            details JSONB NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE (reading_id, lang, use_llm)
+        );
+        """
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(ddl_readings)
                 cur.execute(ddl_cards)
                 cur.execute(ddl_interp)
+                cur.execute(ddl_details)
             conn.commit()
 
     def create(self, reading: ReadingResponse) -> str:
@@ -152,6 +176,34 @@ class PostgresReadingRepository:
                     DO UPDATE SET summary=EXCLUDED.summary, advices=EXCLUDED.advices, llm_used=EXCLUDED.llm_used
                     """,
                     (data.id, lang, style, use_llm, data.summary, data.advices, data.llm_used),
+                )
+            conn.commit()
+
+    # --- per-card details cache (LLM) ---
+    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> Optional[List[str]]:
+        with psycopg.connect(self._db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT details FROM interpretation_details WHERE reading_id=%s AND lang=%s AND use_llm=%s",
+                    (reading_id, lang, use_llm),
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                details = row[0]
+        return list(details) if isinstance(details, list) else None
+
+    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: List[str]) -> None:
+        with psycopg.connect(self._db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO interpretation_details (reading_id, lang, use_llm, details)
+                    VALUES (%s,%s,%s,%s)
+                    ON CONFLICT (reading_id, lang, use_llm)
+                    DO UPDATE SET details=EXCLUDED.details
+                    """,
+                    (reading_id, lang, use_llm, details),
                 )
             conn.commit()
 

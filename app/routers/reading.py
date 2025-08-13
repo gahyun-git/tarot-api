@@ -74,19 +74,33 @@ def interpret_reading(request: Request, reading_id: str, payload: InterpretReque
 @router.get("/{reading_id}/result", response_model=FullReadingResult)
 @router.get("/{reading_id}/result/", response_model=FullReadingResult)
 @limiter.limit(settings.rate_limit_cards)
-def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False, repo = Depends(get_reading_repo)):
+def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False, repo = Depends(get_reading_repo), deck = Depends(get_deck_loader)):
     found = repo.get(reading_id)
     if not found:
         raise HTTPException(status_code=404, detail="reading not found")
-    # compose card contexts
-    pos_role = {1: "이슈", 2: "숨은 영향", 3: "과거", 4: "현재", 5: "근미래", 6: "내면", 7: "외부", 8: "솔루션"}
+    # normalize language once (auto -> detected)
+    lang_norm = detect_lang(found.question) if lang == "auto" else lang
+    # compose card contexts with i18n roles
+    roles_ko = {1: "이슈", 2: "숨은 영향", 3: "과거", 4: "현재", 5: "근미래", 6: "내면", 7: "외부", 8: "솔루션"}
+    roles_en = {1: "Issue", 2: "Hidden Influence", 3: "Past", 4: "Present", 5: "Near Future", 6: "Inner", 7: "Outer", 8: "Solution"}
+    roles_ja = {1: "課題", 2: "潜在的影響", 3: "過去", 4: "現在", 5: "近未来", 6: "内面", 7: "外部", 8: "ソリューション"}
+    roles_zh = {1: "议题", 2: "潜在影响", 3: "过去", 4: "现在", 5: "近未来", 6: "内在", 7: "外在", 8: "解决方案"}
     items: list[CardWithContext] = []
     for it in found.items:
-        m = it.card.upright_meaning if not it.is_reversed else it.card.reversed_meaning
-        items.append(CardWithContext(position=it.position, role=pos_role.get(it.position, ""), is_reversed=it.is_reversed, used_meanings=(m[:3] if m else None), card=it.card))
+        # language-aware meanings with fallback
+        m = deck.get_meanings(it.card.id, lang_norm, it.is_reversed)
+        # normalize language for roles selection
+        lang_key = (lang_norm or "en").lower()
+        if lang_key.startswith("zh"):
+            role_map = roles_zh
+        elif lang_key == "ko":
+            role_map = roles_ko
+        elif lang_key == "ja":
+            role_map = roles_ja
+        else:
+            role_map = roles_en
+        items.append(CardWithContext(position=it.position, role=role_map.get(it.position, ""), is_reversed=it.is_reversed, used_meanings=(m[:3] if m else None), card=it.card))
     # interpretation
-    # normalize language for caching (auto -> detected)
-    lang_norm = detect_lang(found.question) if lang == "auto" else lang
     # load or compute interpretation (cache aware)
     cached = repo.get_interpretation(reading_id, lang_norm, "concise", use_llm)
     if cached:
@@ -97,9 +111,14 @@ def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm
         else:
             interp = interpret_local(found, lang_norm)
         repo.save_interpretation(interp, lang_norm, "concise", use_llm)
-    # 카드별 상세 해설(옵션: LLM)
+    # 카드별 상세 해설(옵션: LLM, 캐시)
     if use_llm and settings.google_api_key:
-        details = explain_cards_with_llm(found, lang_norm, settings.google_api_key)
+        cached_details = repo.get_details(reading_id, lang_norm, True)
+        if cached_details:
+            details = cached_details
+        else:
+            details = explain_cards_with_llm(found, lang_norm, settings.google_api_key)
+            repo.save_details(reading_id, lang_norm, True, details)
         for i, d in enumerate(details):
             if i < len(items):
                 items[i].llm_detail = d

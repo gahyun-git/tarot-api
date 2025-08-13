@@ -5,7 +5,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",  # 무시되지 않는 추가 환경변수로 인한 ValidationError 방지
+    )
 
     env: str = Field(default="local", validation_alias="ENV")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
