@@ -5,6 +5,7 @@ import uuid
 from typing import Dict, Optional, Tuple, List
 
 import psycopg
+from psycopg.types.json import Jsonb
 
 from app.schemas.reading import ReadingResponse, DrawnCard, Card, GroupOrder, InterpretResponse
 
@@ -151,8 +152,8 @@ class PostgresReadingRepository:
                             item.card.name,
                             item.card.arcana,
                             item.card.image_url,
-                            item.card.upright_meaning,
-                            item.card.reversed_meaning,
+                            Jsonb(item.card.upright_meaning) if item.card.upright_meaning is not None else None,
+                            Jsonb(item.card.reversed_meaning) if item.card.reversed_meaning is not None else None,
                         ),
                     )
             conn.commit()
@@ -229,7 +230,16 @@ class PostgresReadingRepository:
                     ON CONFLICT (reading_id, lang, style, use_llm)
                     DO UPDATE SET summary=EXCLUDED.summary, advices=EXCLUDED.advices, llm_used=EXCLUDED.llm_used, sections=EXCLUDED.sections
                     """,
-                    (data.id, lang, style, use_llm, data.summary, data.advices, data.llm_used, getattr(data, "sections", None)),
+                    (
+                        data.id,
+                        lang,
+                        style,
+                        use_llm,
+                        data.summary,
+                        Jsonb(data.advices),
+                        data.llm_used,
+                        Jsonb(getattr(data, "sections", None)) if getattr(data, "sections", None) is not None else None,
+                    ),
                 )
             conn.commit()
 
@@ -257,7 +267,7 @@ class PostgresReadingRepository:
                     ON CONFLICT (reading_id, lang, use_llm)
                     DO UPDATE SET details=EXCLUDED.details
                     """,
-                    (reading_id, lang, use_llm, details),
+                    (reading_id, lang, use_llm, Jsonb(details)),
                 )
             conn.commit()
 
