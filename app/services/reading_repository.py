@@ -74,9 +74,21 @@ class PostgresReadingRepository:
             reading_id UUID REFERENCES readings(id) ON DELETE CASCADE,
             position INT NOT NULL,
             is_reversed BOOLEAN NOT NULL,
-            card_id INT NOT NULL
+            card_id INT NOT NULL,
+            card_name TEXT,
+            arcana TEXT,
+            image_url TEXT,
+            upright_meaning JSONB,
+            reversed_meaning JSONB
         );
         """
+        alter_cards_columns = [
+            "ALTER TABLE reading_cards ADD COLUMN IF NOT EXISTS card_name TEXT",
+            "ALTER TABLE reading_cards ADD COLUMN IF NOT EXISTS arcana TEXT",
+            "ALTER TABLE reading_cards ADD COLUMN IF NOT EXISTS image_url TEXT",
+            "ALTER TABLE reading_cards ADD COLUMN IF NOT EXISTS upright_meaning JSONB",
+            "ALTER TABLE reading_cards ADD COLUMN IF NOT EXISTS reversed_meaning JSONB",
+        ]
         ddl_interp = """
         CREATE TABLE IF NOT EXISTS interpretations (
             id BIGSERIAL PRIMARY KEY,
@@ -102,12 +114,18 @@ class PostgresReadingRepository:
             UNIQUE (reading_id, lang, use_llm)
         );
         """
+        alter_interp_sections = (
+            "ALTER TABLE interpretations ADD COLUMN IF NOT EXISTS sections JSONB"
+        )
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(ddl_readings)
                 cur.execute(ddl_cards)
                 cur.execute(ddl_interp)
                 cur.execute(ddl_details)
+                cur.execute(alter_interp_sections)
+                for stmt in alter_cards_columns:
+                    cur.execute(stmt)
             conn.commit()
 
     def create(self, reading: ReadingResponse) -> str:
@@ -121,8 +139,21 @@ class PostgresReadingRepository:
                 )
                 for item in reading.items:
                     cur.execute(
-                        "INSERT INTO reading_cards (reading_id, position, is_reversed, card_id) VALUES (%s, %s, %s, %s)",
-                        (rid, item.position, item.is_reversed, item.card.id),
+                        """
+                        INSERT INTO reading_cards (reading_id, position, is_reversed, card_id, card_name, arcana, image_url, upright_meaning, reversed_meaning)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            rid,
+                            item.position,
+                            item.is_reversed,
+                            item.card.id,
+                            item.card.name,
+                            item.card.arcana,
+                            item.card.image_url,
+                            item.card.upright_meaning,
+                            item.card.reversed_meaning,
+                        ),
                     )
             conn.commit()
         reading.id = rid
@@ -141,13 +172,28 @@ class PostgresReadingRepository:
                 rid, question, a, b, c = row
                 order = [GroupOrder(a), GroupOrder(b), GroupOrder(c)]
                 cur.execute(
-                    "SELECT position, is_reversed, card_id FROM reading_cards WHERE reading_id=%s ORDER BY position",
+                    """
+                    SELECT position, is_reversed, card_id, card_name, arcana, image_url, upright_meaning, reversed_meaning
+                    FROM reading_cards WHERE reading_id=%s ORDER BY position
+                    """,
                     (reading_id,),
                 )
                 items_rows = cur.fetchall()
         items = [
-            DrawnCard(position=pos, is_reversed=is_rev, card=Card(id=card_id, name="", arcana=""))
-            for (pos, is_rev, card_id) in items_rows
+            DrawnCard(
+                position=pos,
+                is_reversed=is_rev,
+                card=Card(
+                    id=card_id,
+                    name=(card_name or ""),
+                    arcana=(arcana or ""),
+                    suit=None,
+                    image_url=image_url,
+                    upright_meaning=(upright if isinstance(upright, list) else None),
+                    reversed_meaning=(reversed if isinstance(reversed, list) else None),
+                ),
+            )
+            for (pos, is_rev, card_id, card_name, arcana, image_url, upright, reversed) in items_rows
         ]
         return ReadingResponse(id=str(rid), question=question, order=order, count=len(items), items=items)
 
@@ -156,26 +202,34 @@ class PostgresReadingRepository:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT summary, advices, llm_used FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
+                    "SELECT summary, advices, llm_used, sections FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
                     (reading_id, lang, style, use_llm),
                 )
                 row = cur.fetchone()
                 if not row:
                     return None
-                summary, advices, llm_used = row
-        return InterpretResponse(id=reading_id, lang=lang, summary=summary, positions=[], advices=list(advices), llm_used=llm_used)
+                summary, advices, llm_used, sections = row
+        return InterpretResponse(
+            id=reading_id,
+            lang=lang,
+            summary=summary,
+            positions=[],
+            advices=list(advices),
+            llm_used=llm_used,
+            sections=sections if isinstance(sections, dict) else None,
+        )
 
     def save_interpretation(self, data: InterpretResponse, lang: str, style: str, use_llm: bool) -> None:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO interpretations (reading_id, lang, style, use_llm, summary, advices, llm_used)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s)
+                    INSERT INTO interpretations (reading_id, lang, style, use_llm, summary, advices, llm_used, sections)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (reading_id, lang, style, use_llm)
-                    DO UPDATE SET summary=EXCLUDED.summary, advices=EXCLUDED.advices, llm_used=EXCLUDED.llm_used
+                    DO UPDATE SET summary=EXCLUDED.summary, advices=EXCLUDED.advices, llm_used=EXCLUDED.llm_used, sections=EXCLUDED.sections
                     """,
-                    (data.id, lang, style, use_llm, data.summary, data.advices, data.llm_used),
+                    (data.id, lang, style, use_llm, data.summary, data.advices, data.llm_used, getattr(data, "sections", None)),
                 )
             conn.commit()
 
