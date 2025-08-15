@@ -1,4 +1,6 @@
+from fastapi import status
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 
@@ -12,7 +14,7 @@ def test_reading_validation_group_order_unique():
         "allow_reversed": True,
     }
     r = client.post("/reading/", json=payload)
-    assert r.status_code == 422
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     body = r.json()
     assert body["error"]["code"] == "validation_error"
 
@@ -27,4 +29,4 @@ def test_reading_validation_shuffle_times_bounds():
         "allow_reversed": True,
     }
     r = client.post("/reading/", json=payload)
-    assert r.status_code == 422
+    assert r.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
