@@ -1,19 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi import _rate_limit_exceeded_handler
 
 from app.core.config import settings
+from app.core.errors import http_error_handler
 from app.core.logging import setup_logging
 from app.core.middleware import request_id_middleware
-from app.core.errors import http_error_handler
 from app.core.rate_limit import limiter
-from app.core.security import SecurityHeadersMiddleware, require_api_auth
+from app.core.security import SecurityHeadersMiddleware
+from app.routers import cards, health, reading
 from app.services.deck_loader import DeckLoader
-from app.services.reading_repository import ReadingRepository, PostgresReadingRepository
-from app.routers import health, cards, reading
-from fastapi.staticfiles import StaticFiles
+from app.services.reading_repository import PostgresReadingRepository, ReadingRepository
 
 
 def create_app() -> FastAPI:
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
 
     # Error handler
     from fastapi.exceptions import RequestValidationError
+
     from app.core.errors import validation_error_handler
 
     app.add_exception_handler(Exception, http_error_handler)
@@ -58,9 +59,8 @@ def create_app() -> FastAPI:
     else:
         app.state.reading_repo = ReadingRepository()
     # Validate CORS in non-local env
-    if settings.env in {"dev", "prod"}:
-        if not settings.cors_origins:
-            raise RuntimeError("CORS_ORIGINS must be set in dev/prod environments")
+    if settings.env in {"dev", "prod"} and not settings.cors_origins:
+        raise RuntimeError("CORS_ORIGINS must be set in dev/prod environments")
 
     # Warm-up deck loading to avoid first-request latency
     try:

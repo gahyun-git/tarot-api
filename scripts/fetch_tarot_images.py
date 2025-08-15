@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import argparse
-import sys
+import json
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import httpx
-import json
 
 RAW_URL = "https://raw.githubusercontent.com/metabismuth/tarot-json/master/tarot-images.json"
 CARDS_BASE = "https://raw.githubusercontent.com/metabismuth/tarot-json/master/cards/"
@@ -14,7 +13,7 @@ DATA_PATH = ROOT / "data" / "tarot-images.json"
 
 REQUIRED_KEYS = {"id", "name", "arcana"}
 
-def fetch() -> List[dict[str, Any]]:
+def fetch() -> list[dict[str, Any]]:
     with httpx.Client(timeout=15.0, follow_redirects=True) as client:
         r = client.get(RAW_URL)
         r.raise_for_status()
@@ -22,9 +21,9 @@ def fetch() -> List[dict[str, Any]]:
     # Expecting { description: str, cards: [ ... ] }
     if not isinstance(raw, dict) or "cards" not in raw or not isinstance(raw["cards"], list):
         raise ValueError("Invalid payload: expected object with 'cards' list")
-    cards_raw: List[dict[str, Any]] = raw["cards"]
+    cards_raw: list[dict[str, Any]] = raw["cards"]
 
-    mapped: List[dict[str, Any]] = []
+    mapped: list[dict[str, Any]] = []
     for idx, c in enumerate(cards_raw):
         name = c.get("name")
         arcana = c.get("arcana")
@@ -41,7 +40,7 @@ def fetch() -> List[dict[str, Any]]:
     return mapped
 
 
-def validate(data: List[dict[str, Any]]) -> None:
+def validate(data: list[dict[str, Any]]) -> None:
     if len(data) < 78:
         raise ValueError(f"Expected >=78 cards, got {len(data)}")
     ids = [c.get("id") for c in data]
@@ -54,7 +53,7 @@ def validate(data: List[dict[str, Any]]) -> None:
             raise ValueError("Invalid arcana value")
 
 
-def write(data: List[dict[str, Any]]) -> None:
+def write(data: list[dict[str, Any]]) -> None:
     DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     DATA_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 

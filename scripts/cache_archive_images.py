@@ -4,11 +4,9 @@ from __future__ import annotations
 import argparse
 from io import BytesIO
 from pathlib import Path
-from typing import Dict
 
 import httpx
 from PIL import Image
-
 
 ARCHIVE_ITEM = "https://archive.org/metadata/rider-waite-tarot"
 FILE_BASE = "https://archive.org/download/rider-waite-tarot/{}"

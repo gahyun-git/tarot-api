@@ -1,5 +1,6 @@
+from typing import Optional
+
 from pydantic import BaseModel
-from typing import Optional, List
 
 
 class Card(BaseModel):
@@ -8,8 +9,8 @@ class Card(BaseModel):
     arcana: str
     suit: Optional[str] = None
     image_url: Optional[str] = None
-    upright_meaning: Optional[List[str]] = None
-    reversed_meaning: Optional[List[str]] = None
+    upright_meaning: Optional[list[str]] = None
+    reversed_meaning: Optional[list[str]] = None
 
 
 class CardsResponse(BaseModel):
@@ -20,5 +21,5 @@ class CardsResponse(BaseModel):
 class CardMeaningsResponse(BaseModel):
     id: int
     lang: str
-    upright: List[str]
-    reversed: List[str]
+    upright: list[str]
+    reversed: list[str]

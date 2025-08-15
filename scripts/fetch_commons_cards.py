@@ -6,9 +6,8 @@ Wikimedia Commons에서 RWS 카드 원본을 다운로드하여 static/cards/*.j
 """
 from __future__ import annotations
 
-import argparse
-import sys
 from pathlib import Path
+
 import httpx
 
 MAJOR_FILES = [

@@ -1,7 +1,8 @@
+import logging
 import time
 import uuid
-import logging
 from typing import Callable
+
 from fastapi import Request, Response
 
 logger = logging.getLogger(__name__)

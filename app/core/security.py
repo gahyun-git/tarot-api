@@ -1,11 +1,12 @@
-import hmac
 import hashlib
+import hmac
 import time
-from typing import Callable
-from fastapi import Request, HTTPException
+
+from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
 from starlette.responses import Response
+from starlette.types import ASGIApp
+
 from app.core.config import settings
 
 

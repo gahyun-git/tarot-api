@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from app.core.deps import get_deck_loader
-from app.schemas.cards import CardsResponse, Card, CardMeaningsResponse
-from app.core.rate_limit import limiter
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 from app.core.config import settings
+from app.core.deps import get_deck_loader
+from app.core.rate_limit import limiter
+from app.schemas.cards import Card, CardMeaningsResponse, CardsResponse
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 

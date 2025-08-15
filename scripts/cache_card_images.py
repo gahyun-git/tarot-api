@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import httpx
 
@@ -31,7 +31,7 @@ def main() -> int:
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    cards: List[dict[str, Any]] = json.loads(data_path.read_text(encoding="utf-8"))
+    cards: list[dict[str, Any]] = json.loads(data_path.read_text(encoding="utf-8"))
     ok, fail, skip = 0, 0, 0
     for c in cards:
         cid = c.get("id")

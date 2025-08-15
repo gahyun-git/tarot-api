@@ -1,4 +1,3 @@
-from typing import List
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,7 +12,7 @@ class Settings(BaseSettings):
 
     env: str = Field(default="local", validation_alias="ENV")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
-    cors_origins: List[str] = Field(default_factory=list, validation_alias="CORS_ORIGINS")
+    cors_origins: list[str] = Field(default_factory=list, validation_alias="CORS_ORIGINS")
     data_path: str = Field(default="data/tarot-images.json", validation_alias="DATA_PATH")
     use_db: bool = Field(default=False, validation_alias="USE_DB")
     db_url: str | None = Field(default=None, validation_alias="DB_URL")

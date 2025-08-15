@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import httpx
 
@@ -15,26 +15,18 @@ def _is_public_domain(extmetadata: dict) -> bool:
     # Commons extmetadata fields vary; check several hints
     for key in ("LicenseShortName", "License", "UsageTerms"):
         meta = extmetadata.get(key)
-        if isinstance(meta, dict):
-            value = str(meta.get("value", ""))
-        else:
-            value = str(meta or "")
+        value = str(meta.get("value", "")) if isinstance(meta, dict) else str(meta or "")
         if value:
             v = value.lower()
             if "public domain" in v or v.startswith("pd-"):
                 return True
     # LicenseUrl sometimes includes '/publicdomain/'
     meta = extmetadata.get("LicenseUrl")
-    if isinstance(meta, dict):
-        url = str(meta.get("value", ""))
-    else:
-        url = str(meta or "")
-    if "/publicdomain/" in url:
-        return True
-    return False
+    url = str(meta.get("value", "")) if isinstance(meta, dict) else str(meta or "")
+    return "/publicdomain/" in url
 
 
-def commons_search_image_url(card_name: str) -> Optional[str]:
+def commons_search_image_url(card_name: str) -> str | None:
     """Search Wikimedia Commons for an RWS image by card english name.
 
     Strategy:
@@ -86,7 +78,7 @@ def main() -> int:
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
-    cards: List[Dict[str, Any]] = json.loads(Path(args.data).read_text(encoding="utf-8"))
+    cards: list[dict[str, Any]] = json.loads(Path(args.data).read_text(encoding="utf-8"))
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 

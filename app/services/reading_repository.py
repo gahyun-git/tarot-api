@@ -2,22 +2,21 @@ from __future__ import annotations
 
 import threading
 import uuid
-from typing import Dict, Optional, Tuple, List
 
 import psycopg
 from psycopg.types.json import Jsonb
 
-from app.schemas.reading import ReadingResponse, DrawnCard, Card, GroupOrder, InterpretResponse
+from app.schemas.reading import Card, DrawnCard, GroupOrder, InterpretResponse, ReadingResponse
 
 
 class ReadingRepository:
     """In-memory repository for readings. Thread-safe for simple use cases."""
 
     def __init__(self) -> None:
-        self._store: Dict[str, ReadingResponse] = {}
+        self._store: dict[str, ReadingResponse] = {}
         self._lock = threading.Lock()
-        self._interpretations: Dict[Tuple[str, str, str, bool], InterpretResponse] = {}
-        self._details: Dict[Tuple[str, str, bool], List[str]] = {}
+        self._interpretations: dict[tuple[str, str, str, bool], InterpretResponse] = {}
+        self._details: dict[tuple[str, str, bool], list[str]] = {}
 
     def create(self, reading: ReadingResponse) -> str:
         reading_id = str(uuid.uuid4())
@@ -26,12 +25,12 @@ class ReadingRepository:
             self._store[reading_id] = reading
         return reading_id
 
-    def get(self, reading_id: str) -> Optional[ReadingResponse]:
+    def get(self, reading_id: str) -> ReadingResponse | None:
         with self._lock:
             return self._store.get(reading_id)
 
     # --- interpretations cache ---
-    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> Optional[InterpretResponse]:
+    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> InterpretResponse | None:
         key = (reading_id, lang, style, use_llm)
         with self._lock:
             return self._interpretations.get(key)
@@ -42,12 +41,12 @@ class ReadingRepository:
             self._interpretations[key] = data
 
     # --- per-card details cache (LLM) ---
-    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> Optional[List[str]]:
+    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> list[str] | None:
         key = (reading_id, lang, use_llm)
         with self._lock:
             return self._details.get(key)
 
-    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: List[str]) -> None:
+    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: list[str]) -> None:
         key = (reading_id, lang, use_llm)
         with self._lock:
             self._details[key] = list(details)
@@ -160,7 +159,7 @@ class PostgresReadingRepository:
         reading.id = rid
         return rid
 
-    def get(self, reading_id: str) -> Optional[ReadingResponse]:
+    def get(self, reading_id: str) -> ReadingResponse | None:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -199,7 +198,7 @@ class PostgresReadingRepository:
         return ReadingResponse(id=str(rid), question=question, order=order, count=len(items), items=items)
 
     # --- interpretations cache ---
-    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> Optional[InterpretResponse]:
+    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> InterpretResponse | None:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -244,7 +243,7 @@ class PostgresReadingRepository:
             conn.commit()
 
     # --- per-card details cache (LLM) ---
-    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> Optional[List[str]]:
+    def get_details(self, reading_id: str, lang: str, use_llm: bool) -> list[str] | None:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -257,7 +256,7 @@ class PostgresReadingRepository:
                 details = row[0]
         return list(details) if isinstance(details, list) else None
 
-    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: List[str]) -> None:
+    def save_details(self, reading_id: str, lang: str, use_llm: bool, details: list[str]) -> None:
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -14,7 +14,7 @@ class GroupOrder(str, Enum):
 
 class ReadingRequest(BaseModel):
     question: str = Field(min_length=1, max_length=500)
-    group_order: List[GroupOrder] = Field(
+    group_order: list[GroupOrder] = Field(
         description="세 그룹을 사용자가 선택한 순서대로 예: [A,B,C]",
         min_length=3,
         max_length=3,
@@ -25,7 +25,7 @@ class ReadingRequest(BaseModel):
 
     @field_validator("group_order")
     @classmethod
-    def validate_group_order_unique(cls, v: List[GroupOrder]) -> List[GroupOrder]:
+    def validate_group_order_unique(cls, v: list[GroupOrder]) -> list[GroupOrder]:
         if len(set(v)) != 3:
             raise ValueError("group_order는 A,B,C를 한 번씩 포함해야 합니다")
         return v
@@ -40,7 +40,7 @@ class DrawnCard(BaseModel):
 class ReadingResponse(BaseModel):
     id: Optional[str] = None
     question: str
-    order: List[GroupOrder]
+    order: list[GroupOrder]
     count: int
     items: list[DrawnCard]
 
@@ -65,7 +65,7 @@ class CardWithContext(BaseModel):
     position: int
     role: str
     is_reversed: bool
-    used_meanings: Optional[List[str]] = None
+    used_meanings: Optional[list[str]] = None
     card: Card
     llm_detail: Optional[str] = None
 

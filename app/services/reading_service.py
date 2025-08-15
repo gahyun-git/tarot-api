@@ -1,10 +1,10 @@
-from typing import Any, List
 import random
+from typing import Any
 
 from app.utils.rand import fisher_yates_shuffle_with_rng
 
 
-def split_into_three_groups(cards: List[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+def split_into_three_groups(cards: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     if len(cards) < 3:
         raise ValueError("Not enough cards to split")
     # 균등 분할(78장 기준 26장씩)
@@ -23,14 +23,14 @@ def merge_by_order(groups: tuple[list[dict[str, Any]], list[dict[str, Any]], lis
     return merged
 
 
-def shuffle_n_times(cards: List[dict[str, Any]], times: int, rng: random.Random) -> list[dict[str, Any]]:
+def shuffle_n_times(cards: list[dict[str, Any]], times: int, rng: random.Random) -> list[dict[str, Any]]:
     shuffled = list(cards)
     for _ in range(times):
         shuffled = fisher_yates_shuffle_with_rng(shuffled, rng)
     return shuffled
 
 
-def draw_eight(cards: List[dict[str, Any]], rng: random.Random, allow_reversed: bool) -> list[dict[str, Any]]:
+def draw_eight(cards: list[dict[str, Any]], rng: random.Random, allow_reversed: bool) -> list[dict[str, Any]]:
     if len(cards) < 8:
         raise ValueError("Not enough cards in deck")
     drawn = []
@@ -40,7 +40,7 @@ def draw_eight(cards: List[dict[str, Any]], rng: random.Random, allow_reversed: 
     return drawn
 
 
-def create_reading(cards: List[dict[str, Any]], order: list[str], shuffle_times: int, seed: int | None, allow_reversed: bool):
+def create_reading(cards: list[dict[str, Any]], order: list[str], shuffle_times: int, seed: int | None, allow_reversed: bool):
     if len(cards) < 8:
         raise ValueError("Not enough cards in deck")
     rng = random.Random(seed)

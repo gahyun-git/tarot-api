@@ -1,8 +1,8 @@
+import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Any, List, Dict, Optional
-import hashlib
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -11,13 +11,13 @@ class DeckLoader:
     def __init__(self, data_path: str, meanings_path: str | None = None, prefer_local_images: bool = True):
         self._data_path = Path(data_path)
         self._meanings_path = Path(meanings_path) if meanings_path else None
-        self._cards: List[dict[str, Any]] = []
+        self._cards: list[dict[str, Any]] = []
         self._prefer_local = prefer_local_images
         self._etag: str | None = None
-        self._meanings_by_lang: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
+        self._meanings_by_lang: dict[str, dict[str, dict[str, list[str]]]] = {}
 
     @property
-    def cards(self) -> List[dict[str, Any]]:
+    def cards(self) -> list[dict[str, Any]]:
         if not self._cards:
             self.load()
         return self._cards
@@ -75,7 +75,7 @@ class DeckLoader:
                 with path.open("r", encoding="utf-8") as mf:
                     mobj = json.load(mf)
                 if isinstance(mobj, dict):
-                    lang_map: Dict[str, Dict[str, List[str]]] = {}
+                    lang_map: dict[str, dict[str, list[str]]] = {}
                     for key, val in mobj.items():
                         if isinstance(val, dict):
                             lang_map[str(key)] = {
@@ -98,7 +98,7 @@ class DeckLoader:
     def etag(self) -> str | None:
         return self._etag
 
-    def get_meanings(self, card_id: int, lang: str, is_reversed: bool) -> Optional[List[str]]:
+    def get_meanings(self, card_id: int, lang: str, is_reversed: bool) -> Optional[list[str]]:
         """Return meanings for a card id in requested language with sensible fallbacks.
 
         Fallback order: requested lang → en → ko → stored on card (if any).

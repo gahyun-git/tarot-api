@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import List
 import json
-
-from app.schemas.reading import ReadingResponse, InterpretResponse
 import re
+
+from app.schemas.reading import InterpretResponse, ReadingResponse
 
 try:
     import google.generativeai as genai  # type: ignore
@@ -57,7 +56,7 @@ POS_TEXT_ZH = {
 }
 
 
-def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[List[str], List[str], str]:
+def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], list[str], str]:
     # select language map
     l = (lang or "en").lower()
     if l.startswith("zh"):
@@ -88,8 +87,8 @@ def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[List[str], 
         summary_text = (
             "Flow summary: Center on position 8 (Solution), link the present with inner/outer factors, start small and iterate. Avoid determinism; proceed as hypotheses."
         )
-    lines: List[str] = []
-    advices: List[str] = []
+    lines: list[str] = []
+    advices: list[str] = []
     for it in reading.items:
         card = it.card
         meanings = card.upright_meaning if not it.is_reversed else card.reversed_meaning
@@ -225,7 +224,7 @@ def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model:
         return interpret_local(reading, lang)
     # Try JSON parse first
     parsed_summary = None
-    parsed_advices: List[str] | None = None
+    parsed_advices: list[str] | None = None
     parsed_sections = None
     try:
         # Extract the first JSON object (some models may add stray tokens)
