@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
@@ -35,37 +37,41 @@ def reading(request: Request, payload: ReadingRequest | None = None):
     return create_and_save_reading(repo, deck, payload)
 
 
-@router.get("/{reading_id}", response_model=ReadingResponse)
+@router.get("/{reading_id:uuid}", response_model=ReadingResponse)
 @limiter.limit(settings.rate_limit_cards)
-def get_reading(request: Request, reading_id: str):
+def get_reading(request: Request, reading_id: UUID):
     repo = get_reading_repo(request)
-    found = repo.get(reading_id)
+    found = repo.get(str(reading_id))
     if not found:
         raise HTTPException(status_code=404, detail="reading not found")
     return found
 
 
 @router.post(
-    "/{reading_id}/interpret",
+    "/{reading_id:uuid}/interpret",
     response_model=InterpretResponse,
     dependencies=[Depends(require_api_auth)],
 )
 @limiter.limit(settings.rate_limit_reading_post)
-def interpret_reading(request: Request, reading_id: str, payload: InterpretRequest):
+def interpret_reading(request: Request, reading_id: UUID, payload: InterpretRequest):
     repo = get_reading_repo(request)
     try:
-        return interpret_and_cache(repo, reading_id, payload, settings.google_api_key)
+        return interpret_and_cache(repo, str(reading_id), payload, settings.google_api_key)
     except ValueError as err:
         raise HTTPException(status_code=404, detail="reading not found") from err
 
 
-@router.get("/{reading_id}/result", response_model=FullReadingResult)
+@router.get("/{reading_id:uuid}/result", response_model=FullReadingResult)
 @limiter.limit(settings.rate_limit_cards)
-def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False):
+def get_full_result(
+    request: Request, reading_id: UUID, lang: str = "ko", use_llm: bool = False
+):
     repo = get_reading_repo(request)
     deck = get_deck_loader(request)
     try:
-        params = FullResultParams(repo, deck, reading_id, lang, use_llm, settings.google_api_key)
+        params = FullResultParams(
+            repo, deck, str(reading_id), lang, use_llm, settings.google_api_key
+        )
         return service_get_full_result(params)
     except ValueError as err:
         raise HTTPException(status_code=404, detail="reading not found") from err

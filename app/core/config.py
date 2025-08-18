@@ -1,3 +1,5 @@
+import json as _json
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,7 +13,8 @@ class Settings(BaseSettings):
 
     env: str = Field(default="local", validation_alias="ENV")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
-    cors_origins: list[str] = Field(default_factory=list, validation_alias="CORS_ORIGINS")
+    # Accept both JSON array string and comma-separated string
+    cors_origins: list[str] | str = Field(default_factory=list, validation_alias="CORS_ORIGINS")
     data_path: str = Field(default="data/tarot-images.json", validation_alias="DATA_PATH")
     use_db: bool = Field(default=False, validation_alias="USE_DB")
     db_url: str | None = Field(default=None, validation_alias="DB_URL")
@@ -38,9 +41,21 @@ class Settings(BaseSettings):
     def _parse_cors_origins(cls, v):
         if v is None:
             return []
+        # Already list
+        if isinstance(v, list):
+            return [str(s).strip() for s in v if str(s).strip()]
+        # JSON array string
+        if isinstance(v, str) and v.strip().startswith("["):
+            try:
+                arr = _json.loads(v)
+                if isinstance(arr, list):
+                    return [str(s).strip() for s in arr if str(s).strip()]
+            except Exception:
+                pass
+        # Comma-separated string
         if isinstance(v, str):
             return [s.strip() for s in v.split(",") if s.strip()]
-        return v
+        return []
 
     @field_validator("env", mode="before")
     @classmethod

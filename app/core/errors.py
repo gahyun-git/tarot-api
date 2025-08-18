@@ -1,4 +1,5 @@
 from fastapi import Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -27,14 +28,12 @@ def validation_error_handler(request: Request, exc: RequestValidationError):
         if ctx is not None:
             item["ctx"] = {k: str(v) for k, v in ctx.items()}
         details.append(item)
-    return JSONResponse(
-        status_code=422,
-        content={
-            "error": {
-                "code": "validation_error",
-                "message": "Invalid request",
-                "details": details,
-                "request_id": getattr(request.state, "request_id", None),
-            }
-        },
-    )
+    content = {
+        "error": {
+            "code": "validation_error",
+            "message": "Invalid request",
+            "details": details,
+            "request_id": getattr(request.state, "request_id", None),
+        }
+    }
+    return JSONResponse(status_code=422, content=jsonable_encoder(content))
