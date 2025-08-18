@@ -161,7 +161,16 @@ class PostgresReadingRepository:
 
     def create(self, reading: ReadingResponse) -> str:
         rid = str(uuid.uuid4())
-        order_vals = [g.value if isinstance(g, GroupOrder) else str(g) for g in reading.order]
+        # Daily 등 단일 카드 리딩은 order가 비어있을 수 있으므로 안전하게 채운다
+        defaults = [GroupOrder.A.value, GroupOrder.B.value, GroupOrder.C.value]
+        REQUIRED_ORDER_COUNT = 3
+        order_vals = [
+            g.value if isinstance(g, GroupOrder) else str(g)
+            for g in (reading.order or [])
+        ]
+        # 3개 미만이면 기본값으로 보충
+        while len(order_vals) < REQUIRED_ORDER_COUNT:
+            order_vals.append(defaults[len(order_vals)])
         with psycopg.connect(self._db_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(
