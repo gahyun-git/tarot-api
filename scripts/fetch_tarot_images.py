@@ -40,8 +40,11 @@ def fetch() -> list[dict[str, Any]]:
     return mapped
 
 
+EXPECTED_CARDS = 78
+
+
 def validate(data: list[dict[str, Any]]) -> None:
-    if len(data) < 78:
+    if len(data) < EXPECTED_CARDS:
         raise ValueError(f"Expected >=78 cards, got {len(data)}")
     ids = [c.get("id") for c in data]
     if len(ids) != len(set(ids)):

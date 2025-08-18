@@ -56,8 +56,11 @@ RANKS = [
 ]
 
 
+MAJOR_ARCANA_MAX = 21
+
+
 def id_to_filename(cid: int) -> str:
-    if 0 <= cid <= 21:
+    if 0 <= cid <= MAJOR_ARCANA_MAX:
         key = MAJOR_NAMES[cid]
         return f"major_arcana_{key}.png"
     # minors

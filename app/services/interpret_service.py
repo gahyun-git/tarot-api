@@ -140,34 +140,39 @@ def detect_lang(text: str) -> str:
 
 
 def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash") -> InterpretResponse:
-    if lang == "auto":
-        lang = detect_lang(reading.question)
+    lang = detect_lang(reading.question) if lang == "auto" else lang
     lines, advices, summary = _lines_and_advices(reading, lang)
-    # 카드 컨텍스트(반드시 이 8장만 기반으로 해석하도록 전달)
     lkey = (lang or "en").lower()
-    if lkey.startswith("zh"):
-        pos_text = POS_TEXT_ZH
-    elif lkey == "ja":
-        pos_text = POS_TEXT_JA
-    elif lkey == "ko":
-        pos_text = POS_TEXT_KO
-    else:
-        pos_text = POS_TEXT_EN
-    cards_ctx = []
-    for it in reading.items:
-        cards_ctx.append({
-            "position": it.position,
-            "role": pos_text.get(it.position, ""),
-            "name": it.card.name,
-            "arcana": it.card.arcana,
-            "is_reversed": it.is_reversed,
-            "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
-        })
+
+    def _pos_text_for_lang(lk: str) -> dict[int, str]:
+        if lk.startswith("zh"):
+            return POS_TEXT_ZH
+        if lk == "ja":
+            return POS_TEXT_JA
+        if lk == "ko":
+            return POS_TEXT_KO
+        return POS_TEXT_EN
+
+    pos_text = _pos_text_for_lang(lkey)
+
+    def _cards_context() -> list[dict[str, object]]:
+        ctx: list[dict[str, object]] = []
+        for it in reading.items:
+            ctx.append({
+                "position": it.position,
+                "role": pos_text.get(it.position, ""),
+                "name": it.card.name,
+                "arcana": it.card.arcana,
+                "is_reversed": it.is_reversed,
+                "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
+            })
+        return ctx
+
     draft = {
         "question": reading.question,
         "positions": lines,
         "advices": advices,
-        "cards": cards_ctx,
+        "cards": _cards_context(),
         "guidelines": [
             "8번 솔루션 중심으로 연결",
             "단정 금지, 가설/제안 어조",
