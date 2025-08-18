@@ -18,6 +18,7 @@ from app.schemas.reading import (
     SpreadsResponse,
 )
 from app.services.reading_api_service import (
+    DailyParams,
     FullResultParams,
     create_and_save_reading,
     daily_fortune_result,
@@ -84,7 +85,10 @@ def daily_fortune(
     request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False
 ):
     deck = get_deck_loader(request)
-    return daily_fortune_result(deck, lang, seed, use_llm, settings.google_api_key)
+    repo = get_reading_repo(request)
+    return daily_fortune_result(
+        DailyParams(repo, deck, lang, seed, use_llm, settings.google_api_key)
+    )
 
 
 @router.get("/spreads", response_model=SpreadsResponse)

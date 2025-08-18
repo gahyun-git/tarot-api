@@ -163,6 +163,15 @@ class FullResultParams:
     lang: str
     use_llm: bool
     api_key: str | None
+@dataclass
+class DailyParams:
+    repo: object
+    deck: object
+    lang: str
+    seed: int | None
+    use_llm: bool
+    api_key: str | None
+
 
 
 def get_full_result(params: FullResultParams) -> FullReadingResult:
@@ -212,20 +221,18 @@ def interpret_and_cache(
     return result
 
 
-def daily_fortune_result(
-    deck, lang: str, seed: int | None, use_llm: bool, api_key: str | None
-) -> DailyFortuneResponse:
+def daily_fortune_result(p: DailyParams) -> DailyFortuneResponse:
     today = datetime.now(timezone.utc).date().isoformat()
-    rng = _random.Random(seed)
-    cards = deck.cards
+    rng = _random.Random(p.seed)
+    cards = p.deck.cards
     if not cards:
         raise RuntimeError("deck not loaded")
     picked = cards[rng.randrange(len(cards))]
     is_reversed = bool(rng.randint(0, 1))
     q = "오늘의 총운"
-    lang_norm = detect_lang(q) if lang == "auto" else lang
+    lang_norm = detect_lang(q) if p.lang == "auto" else p.lang
     role_map = _role_map_for_lang(lang_norm)
-    m = deck.get_meanings(int(picked.get("id")), lang_norm, is_reversed)
+    m = p.deck.get_meanings(int(picked.get("id")), lang_norm, is_reversed)
     card_ctx = CardWithContext(
         position=1,
         role=role_map.get(1, ""),
@@ -241,10 +248,21 @@ def daily_fortune_result(
         items=[DrawnCard(position=1, is_reversed=is_reversed, card=Card(**picked))],
     )
     interp = (
-        interpret_with_llm(dummy_reading, lang_norm, api_key)
-        if (use_llm and api_key)
+        interpret_with_llm(dummy_reading, lang_norm, p.api_key)
+        if (p.use_llm and p.api_key)
         else interpret_local(dummy_reading, lang_norm)
     )
+    # 저장 후 id 및 공유 슬러그 준비
+    repo_id = p.repo.create(dummy_reading)
+    dummy_reading.id = repo_id
+    # 해석 캐시도 저장해두면 재호출시 바로 제공 가능
+    with suppress(Exception):
+        p.repo.save_interpretation(interp, lang_norm, "concise", p.use_llm)
     return DailyFortuneResponse(
-        date=today, lang=lang_norm, card=card_ctx, summary=interp.summary, llm_used=interp.llm_used
+        id=repo_id,
+        date=today,
+        lang=lang_norm,
+        card=card_ctx,
+        summary=interp.summary,
+        llm_used=interp.llm_used,
     )

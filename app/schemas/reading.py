@@ -87,6 +87,7 @@ class FullReadingResult(BaseModel):
 
 
 class DailyFortuneResponse(BaseModel):
+    id: str
     date: str
     lang: str
     card: CardWithContext
