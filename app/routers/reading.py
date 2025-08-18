@@ -119,3 +119,55 @@ def resolve_share(request: Request, slug: str):
     if not rid:
         raise HTTPException(status_code=404, detail="share link not found")
     return {"reading_id": rid}
+
+
+@router.get("/s/{slug}/reading", response_model=ReadingResponse)
+@limiter.limit(settings.rate_limit_cards)
+def get_reading_by_slug(request: Request, slug: str):
+    repo: ReadingRepository = get_reading_repo(request)
+    rid = repo.resolve_share_slug(slug)
+    if not rid:
+        raise HTTPException(status_code=404, detail="share link not found")
+    found = repo.get(rid)
+    if not found:
+        raise HTTPException(status_code=404, detail="reading not found")
+    return found
+
+
+@router.get("/s/{slug}/result", response_model=FullReadingResult)
+@limiter.limit(settings.rate_limit_cards)
+def get_result_by_slug(request: Request, slug: str, lang: str = "ko", use_llm: bool = False):
+    repo: ReadingRepository = get_reading_repo(request)
+    deck = get_deck_loader(request)
+    rid = repo.resolve_share_slug(slug)
+    if not rid:
+        raise HTTPException(status_code=404, detail="share link not found")
+    params = FullResultParams(repo, deck, rid, lang, use_llm, settings.google_api_key)
+    try:
+        return service_get_full_result(params)
+    except ValueError as err:
+        raise HTTPException(status_code=404, detail="reading not found") from err
+
+
+@router.post("/s/{slug}/interpret", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
+@limiter.limit(settings.rate_limit_reading_post)
+def interpret_by_slug(request: Request, slug: str, payload: InterpretRequest):
+    repo: ReadingRepository = get_reading_repo(request)
+    rid = repo.resolve_share_slug(slug)
+    if not rid:
+        raise HTTPException(status_code=404, detail="share link not found")
+    try:
+        return interpret_and_cache(repo, rid, payload, settings.google_api_key)
+    except ValueError as err:
+        raise HTTPException(status_code=404, detail="reading not found") from err
+
+
+@router.post("/{reading_id:uuid}/share")
+@limiter.limit(settings.rate_limit_cards)
+def create_share(request: Request, reading_id: UUID):
+    repo: ReadingRepository = get_reading_repo(request)
+    found = repo.get(str(reading_id))
+    if not found:
+        raise HTTPException(status_code=404, detail="reading not found")
+    slug = repo.create_share_slug(str(reading_id))
+    return {"slug": slug}
