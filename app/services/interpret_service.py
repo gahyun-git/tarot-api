@@ -122,7 +122,7 @@ def _build_prompt(
         f"2) Summary: 5-7 sentences; natural prose; no [pos#] citations; explicitly connect key cards and roles.\n"
         f"3) Use orientation values strictly from this set: ['{ori[0]}','{ori[1]}'].\n"
         f"4) Exactly 3 advices: the first is type=solution (core synthesis), the other two are type=support.\n"
-        f"5) Each advice must be rich and grounded: 2-4 sentences including (a) insight/why grounded in specific cards & roles, (b) concrete action/what to do, (c) today's first step/how to start now.\n"
+        f"5) Each advice must be rich and grounded: about six sentences (5–6), including (a) insight/why grounded in specific cards & roles, (b) concrete action/what to do, (c) today's first step/how to start now.\n"
         f"6) Avoid platitudes; prefer measurable, time-bounded phrasing (e.g., within 24 hours, for 7 days). Keep it compassionate but laser-focused.\n"
         f"7) Ground every statement in the provided card meanings; do not invent other cards.\n"
         f"Draft: {json.dumps(draft, ensure_ascii=False)}\n"
