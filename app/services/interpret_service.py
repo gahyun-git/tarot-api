@@ -25,22 +25,32 @@ POS_TEXT_KO = {
 # --- Sanitization helpers ----------------------------------------------------
 
 def _sanitize_text(text: str, reading: ReadingResponse) -> str:
-    """Remove card names and orientation tokens from plain text to improve readability."""
+    """Light cleanup without removing card names to avoid broken Korean particles.
+
+    - Remove bracket citations like [pos1], [1]
+    - Remove parentheses that contain only orientation tokens (정/역/upright/reversed/正/逆/正位/逆位) and commas
+    - Collapse leftover empty parentheses and extra commas/spaces
+    """
     if not text:
         return text
     try:
-        # 1) remove card names (longer first to avoid partial overlaps)
-        names = [str(it.card.name or "").strip() for it in getattr(reading, "items", [])]
-        names = [n for n in names if n]
-        if names:
-            names.sort(key=len, reverse=True)
-            pattern = re.compile(r"(?:" + "|".join(re.escape(n) for n in names) + r")")
-            text = pattern.sub("", text)
-        # 2) remove common orientation markers
-        #   (정/역, upright/reversed, 正/逆/正位/逆位) + parentheses if only those tokens
-        text = re.sub(r"\((?:정|역|upright|reversed|正|逆|正位|逆位)\)", "", text, flags=re.IGNORECASE)
-        text = re.sub(r"\b(?:정|역|upright|reversed|正|逆|正位|逆位)\b", "", text, flags=re.IGNORECASE)
-        # 3) collapse excessive spaces
+        # Remove [pos] style citations if any
+        text = re.sub(r"\s*\[(?:pos|position|p)?\d+\]\s*", " ", text, flags=re.IGNORECASE)
+
+        # Remove parentheses containing only orientation tokens and commas/spaces
+        orientation = r"(?:정|역|upright|reversed|正|逆|正位|逆位)"
+        text = re.sub(rf"\(\s*(?:{orientation})(?:\s*,\s*(?:{orientation}))*\s*\)", "", text, flags=re.IGNORECASE)
+
+        # Remove completely empty or comma-only parentheses like (, ), ( , , )
+        text = re.sub(r"\(\s*(?:,\s*)*\)", "", text)
+
+        # Tidy punctuation: collapse multiple commas/spaces
+        text = re.sub(r",\s*,+", ", ", text)
+        text = re.sub(r"\s+([,.)])", r"\1", text)
+        text = re.sub(r"\(\s+", "(", text)
+        text = re.sub(r"\s+\)", ")", text)
+
+        # Collapse excessive spaces
         text = re.sub(r"\s{2,}", " ", text).strip()
         return text
     except Exception:
@@ -307,6 +317,8 @@ def interpret_with_llm(
         parts = [ln.strip("- ") for ln in text.splitlines() if ln.strip().startswith("-")]
         if len(parts) >= EXPECTED_ADVICES:
             adv = parts[:EXPECTED_ADVICES]
+    # As-is text, lightly sanitized to remove dangling parentheses/commas
+    text = _sanitize_text(text, reading)
     return InterpretResponse(
         id=reading.id or "",
         lang=lang,
