@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, Response
 
 from app.core.config import settings
@@ -11,7 +11,8 @@ router = APIRouter(prefix="/cards", tags=["cards"])
 
 @router.get("/", response_model=CardsResponse)
 @limiter.limit(settings.rate_limit_cards)
-def list_cards(request: Request, deck = Depends(get_deck_loader)):
+def list_cards(request: Request):
+    deck = get_deck_loader(request)
     # ETag handling
     etag = getattr(deck, "etag", None)
     inm = request.headers.get("if-none-match")
@@ -27,7 +28,8 @@ def list_cards(request: Request, deck = Depends(get_deck_loader)):
 
 @router.get("/{card_id}", response_model=Card)
 @limiter.limit(settings.rate_limit_cards)
-def get_card(request: Request, card_id: int, deck = Depends(get_deck_loader)):
+def get_card(request: Request, card_id: int):
+    deck = get_deck_loader(request)
     for c in deck.cards:
         if c.get("id") == card_id:
             return Card(**c)
@@ -36,7 +38,8 @@ def get_card(request: Request, card_id: int, deck = Depends(get_deck_loader)):
 
 @router.get("/{card_id}/meanings", response_model=CardMeaningsResponse)
 @limiter.limit(settings.rate_limit_cards)
-def get_card_meanings(request: Request, card_id: int, lang: str = "auto", deck = Depends(get_deck_loader)):
+def get_card_meanings(request: Request, card_id: int, lang: str = "auto"):
+    deck = get_deck_loader(request)
     # 언어 정규화: 카드 이름으로는 감지하기 어려워 기본 ko
     lang_norm = "ko" if lang == "auto" else lang
     # 카드 존재 확인

@@ -160,9 +160,8 @@ class PostgresReadingRepository:
         return rid
 
     def get(self, reading_id: str) -> ReadingResponse | None:
-        with psycopg.connect(self._db_url) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute(
                     "SELECT id, question, ord_a, ord_b, ord_c FROM readings WHERE id=%s",
                     (reading_id,),
                 )
@@ -199,9 +198,8 @@ class PostgresReadingRepository:
 
     # --- interpretations cache ---
     def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> InterpretResponse | None:
-        with psycopg.connect(self._db_url) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute(
                     "SELECT summary, advices, llm_used, sections FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
                     (reading_id, lang, style, use_llm),
                 )
@@ -244,9 +242,8 @@ class PostgresReadingRepository:
 
     # --- per-card details cache (LLM) ---
     def get_details(self, reading_id: str, lang: str, use_llm: bool) -> list[str] | None:
-        with psycopg.connect(self._db_url) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute(
                     "SELECT details FROM interpretation_details WHERE reading_id=%s AND lang=%s AND use_llm=%s",
                     (reading_id, lang, use_llm),
                 )

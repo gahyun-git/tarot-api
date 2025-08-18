@@ -35,7 +35,9 @@ router = APIRouter(prefix="/reading", tags=["reading"])
 @router.post("/", response_model=ReadingResponse, dependencies=[Depends(require_api_auth)])
 @router.post("", response_model=ReadingResponse, dependencies=[Depends(require_api_auth)])
 @limiter.limit(settings.rate_limit_reading_post)
-def reading(request: Request, deck = Depends(get_deck_loader), repo = Depends(get_reading_repo), payload: ReadingRequest | None = None):
+def reading(request: Request, payload: ReadingRequest | None = None):
+    deck = get_deck_loader(request)
+    repo = get_reading_repo(request)
     # FastAPI가 자동으로 JSON body를 ReadingRequest로 파싱
     assert payload is not None
     items_raw = create_reading(
@@ -53,7 +55,8 @@ def reading(request: Request, deck = Depends(get_deck_loader), repo = Depends(ge
 
 @router.get("/{reading_id}", response_model=ReadingResponse)
 @limiter.limit(settings.rate_limit_cards)
-def get_reading(request: Request, reading_id: str, repo = Depends(get_reading_repo)):
+def get_reading(request: Request, reading_id: str):
+    repo = get_reading_repo(request)
     found = repo.get(reading_id)
     if not found:
         raise HTTPException(status_code=404, detail="reading not found")
@@ -63,7 +66,8 @@ def get_reading(request: Request, reading_id: str, repo = Depends(get_reading_re
 @router.post("/{reading_id}/interpret", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
 @router.post("/{reading_id}/interpret/", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
 @limiter.limit(settings.rate_limit_reading_post)
-def interpret_reading(request: Request, reading_id: str, payload: InterpretRequest, repo = Depends(get_reading_repo)):
+def interpret_reading(request: Request, reading_id: str, payload: InterpretRequest):
+    repo = get_reading_repo(request)
     found = repo.get(reading_id)
     if not found:
         raise HTTPException(status_code=404, detail="reading not found")
@@ -86,7 +90,9 @@ def interpret_reading(request: Request, reading_id: str, payload: InterpretReque
 @router.get("/{reading_id}/result", response_model=FullReadingResult)
 @router.get("/{reading_id}/result/", response_model=FullReadingResult)
 @limiter.limit(settings.rate_limit_cards)
-def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False, repo = Depends(get_reading_repo), deck = Depends(get_deck_loader)):
+def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm: bool = False):
+    repo = get_reading_repo(request)
+    deck = get_deck_loader(request)
     found = repo.get(reading_id)
     if not found:
         raise HTTPException(status_code=404, detail="reading not found")
@@ -140,7 +146,8 @@ def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm
 @router.get("/daily", response_model=DailyFortuneResponse)
 @router.get("/daily/", response_model=DailyFortuneResponse)
 @limiter.limit(settings.rate_limit_cards)
-def daily_fortune(request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False, deck = Depends(get_deck_loader)):
+def daily_fortune(request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False):
+    deck = get_deck_loader(request)
     # 오늘 날짜 고정 + 선택적 시드로 재현 가능
     today = datetime.now(timezone.utc).date().isoformat()
     rng = random.Random(seed)
