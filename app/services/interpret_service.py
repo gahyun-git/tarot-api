@@ -22,6 +22,31 @@ POS_TEXT_KO = {
     8: "솔루션",
 }
 
+# --- Sanitization helpers ----------------------------------------------------
+import re
+
+def _sanitize_text(text: str, reading: ReadingResponse) -> str:
+    """Remove card names and orientation tokens from plain text to improve readability."""
+    if not text:
+        return text
+    try:
+        # 1) remove card names (longer first to avoid partial overlaps)
+        names = [str(it.card.name or "").strip() for it in getattr(reading, "items", [])]
+        names = [n for n in names if n]
+        if names:
+            names.sort(key=len, reverse=True)
+            pattern = re.compile(r"(?:" + "|".join(re.escape(n) for n in names) + r")")
+            text = pattern.sub("", text)
+        # 2) remove common orientation markers
+        #   (정/역, upright/reversed, 正/逆/正位/逆位) + parentheses if only those tokens
+        text = re.sub(r"\((?:정|역|upright|reversed|正|逆|正位|逆位)\)", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\b(?:정|역|upright|reversed|正|逆|正位|逆位)\b", "", text, flags=re.IGNORECASE)
+        # 3) collapse excessive spaces
+        text = re.sub(r"\s{2,}", " ", text).strip()
+        return text
+    except Exception:
+        return text
+
 POS_TEXT_EN = {
     1: "Issue",
     2: "Hidden Influence",
@@ -213,6 +238,9 @@ def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], 
 
 def interpret_local(reading: ReadingResponse, lang: str) -> InterpretResponse:
     lines, advices, summary = _lines_and_advices(reading, lang)
+    # sanitize summary/advices for readability
+    summary = _sanitize_text(summary, reading)
+    advices = [_sanitize_text(a, reading) for a in advices]
     return InterpretResponse(
         id=reading.id or "",
         lang=lang,
@@ -262,6 +290,8 @@ def interpret_with_llm(
         return interpret_local(reading, lang)
     parsed_summary, parsed_advices, parsed_sections = _parse_output(text)
     if parsed_summary and parsed_advices and len(parsed_advices) == EXPECTED_ADVICES:
+        parsed_summary = _sanitize_text(parsed_summary, reading)
+        parsed_advices = [_sanitize_text(a, reading) for a in parsed_advices]
         return InterpretResponse(
             id=reading.id or "",
             lang=lang,
