@@ -65,7 +65,7 @@ def interpret_reading(request: Request, reading_id: UUID, payload: InterpretRequ
 @router.get("/{reading_id:uuid}/result", response_model=FullReadingResult)
 @limiter.limit(settings.rate_limit_cards)
 def get_full_result(
-    request: Request, reading_id: UUID, lang: str = "ko", use_llm: bool = False
+    request: Request, reading_id: UUID, lang: str = "auto", use_llm: bool = False
 ):
     repo = get_reading_repo(request)
     deck = get_deck_loader(request)
