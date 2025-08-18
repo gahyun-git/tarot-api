@@ -5,6 +5,7 @@ from typing import Callable
 
 from fastapi import Request, Response
 from starlette.responses import PlainTextResponse
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

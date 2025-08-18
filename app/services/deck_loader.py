@@ -27,8 +27,9 @@ class DeckLoader:
             self._cards = json.load(f)
         if not isinstance(self._cards, list):
             raise ValueError("Deck json must be a list")
-        if len(self._cards) != 78:
-            logger.warning("Deck has %d cards (expected 78)", len(self._cards))
+        EXPECTED_CARDS = 78
+        if len(self._cards) != EXPECTED_CARDS:
+            logger.warning("Deck has %d cards (expected %d)", len(self._cards), EXPECTED_CARDS)
         # Prefer local static image path if available
         if self._prefer_local:
             for c in self._cards:

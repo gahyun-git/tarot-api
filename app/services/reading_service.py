@@ -3,14 +3,13 @@ from typing import Any
 
 from app.utils.rand import fisher_yates_shuffle_with_rng
 
-
 GROUP_COUNT = 3
 DRAW_COUNT = 8
 REVERSED_PROBABILITY = 0.5
 
 
 def split_into_three_groups(cards: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    if len(cards) < 3:
+    if len(cards) < GROUP_COUNT:
         raise ValueError("Not enough cards to split")
     # 균등 분할(78장 기준 26장씩)
     size = len(cards) // 3

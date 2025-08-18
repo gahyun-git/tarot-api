@@ -12,6 +12,9 @@ class GroupOrder(str, Enum):
     C = "C"
 
 
+GROUP_ORDER_COUNT = 3
+
+
 class ReadingRequest(BaseModel):
     question: str = Field(min_length=1, max_length=500)
     group_order: list[GroupOrder] = Field(
@@ -26,7 +29,7 @@ class ReadingRequest(BaseModel):
     @field_validator("group_order")
     @classmethod
     def validate_group_order_unique(cls, v: list[GroupOrder]) -> list[GroupOrder]:
-        if len(set(v)) != 3:
+        if len(set(v)) != GROUP_ORDER_COUNT:
             raise ValueError("group_order는 A,B,C를 한 번씩 포함해야 합니다")
         return v
 

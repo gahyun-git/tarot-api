@@ -42,8 +42,8 @@ async def require_api_auth(request: Request) -> None:
         raise HTTPException(status_code=401, detail="unauthorized")
     try:
         ts_int = int(ts)
-    except Exception:
-        raise HTTPException(status_code=401, detail="invalid timestamp")
+    except Exception as err:
+        raise HTTPException(status_code=401, detail="invalid timestamp") from err
     if abs(int(time.time() * 1000) - ts_int) > 5 * 60 * 1000:
         raise HTTPException(status_code=401, detail="stale request")
     body = await request.body()

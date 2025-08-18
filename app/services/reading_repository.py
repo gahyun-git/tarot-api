@@ -165,19 +165,19 @@ class PostgresReadingRepository:
                     "SELECT id, question, ord_a, ord_b, ord_c FROM readings WHERE id=%s",
                     (reading_id,),
                 )
-                row = cur.fetchone()
-                if not row:
-                    return None
-                rid, question, a, b, c = row
-                order = [GroupOrder(a), GroupOrder(b), GroupOrder(c)]
-                cur.execute(
-                    """
-                    SELECT position, is_reversed, card_id, card_name, arcana, image_url, upright_meaning, reversed_meaning
-                    FROM reading_cards WHERE reading_id=%s ORDER BY position
-                    """,
-                    (reading_id,),
-                )
-                items_rows = cur.fetchall()
+            row = cur.fetchone()
+            if not row:
+                return None
+            rid, question, a, b, c = row
+            order = [GroupOrder(a), GroupOrder(b), GroupOrder(c)]
+            cur.execute(
+                """
+                SELECT position, is_reversed, card_id, card_name, arcana, image_url, upright_meaning, reversed_meaning
+                FROM reading_cards WHERE reading_id=%s ORDER BY position
+                """,
+                (reading_id,),
+            )
+            items_rows = cur.fetchall()
         items = [
             DrawnCard(
                 position=pos,
@@ -203,10 +203,10 @@ class PostgresReadingRepository:
                     "SELECT summary, advices, llm_used, sections FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
                     (reading_id, lang, style, use_llm),
                 )
-                row = cur.fetchone()
-                if not row:
-                    return None
-                summary, advices, llm_used, sections = row
+            row = cur.fetchone()
+            if not row:
+                return None
+            summary, advices, llm_used, sections = row
         return InterpretResponse(
             id=reading_id,
             lang=lang,
@@ -218,9 +218,8 @@ class PostgresReadingRepository:
         )
 
     def save_interpretation(self, data: InterpretResponse, lang: str, style: str, use_llm: bool) -> None:
-        with psycopg.connect(self._db_url) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute(
                     """
                     INSERT INTO interpretations (reading_id, lang, style, use_llm, summary, advices, llm_used, sections)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
@@ -247,16 +246,15 @@ class PostgresReadingRepository:
                     "SELECT details FROM interpretation_details WHERE reading_id=%s AND lang=%s AND use_llm=%s",
                     (reading_id, lang, use_llm),
                 )
-                row = cur.fetchone()
-                if not row:
-                    return None
-                details = row[0]
+            row = cur.fetchone()
+            if not row:
+                return None
+            details = row[0]
         return list(details) if isinstance(details, list) else None
 
     def save_details(self, reading_id: str, lang: str, use_llm: bool, details: list[str]) -> None:
-        with psycopg.connect(self._db_url) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute(
                     """
                     INSERT INTO interpretation_details (reading_id, lang, use_llm, details)
                     VALUES (%s,%s,%s,%s)
