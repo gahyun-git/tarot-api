@@ -2,6 +2,7 @@ import random
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.deps import get_deck_loader, get_reading_repo
@@ -184,5 +185,4 @@ def list_spreads(request: Request):
         SpreadInfo(code="daily", name="Daily One Card", positions={1: "Issue"}).model_dump(),
         SpreadInfo(code="8-basic", name="Eight Positions", positions={1: "Issue", 2: "Hidden Influence", 3: "Past", 4: "Present", 5: "Near Future", 6: "Inner", 7: "Outer", 8: "Solution"}).model_dump(),
     ]
-    from fastapi.responses import JSONResponse
     return JSONResponse(content={"items": items})

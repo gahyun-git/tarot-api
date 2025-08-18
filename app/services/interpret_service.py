@@ -56,22 +56,26 @@ POS_TEXT_ZH = {
 }
 
 
+EXPECTED_ADVICES = 3
+SOLUTION_POSITION = 8
+
+
 def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], list[str], str]:
     # select language map
-    l = (lang or "en").lower()
-    if l.startswith("zh"):
+    lang_key = (lang or "en").lower()
+    if lang_key.startswith("zh"):
         pos_text = POS_TEXT_ZH
         orient_u, orient_r = "正位", "逆位"
         sol_tmpl = "解决方案：今天用\"{m}\"开始一个小的行动。"
         sup_tmpl = "支持：从\"{m}\"的视角加入一个小实验。"
         summary_text = "流程摘要：以第8位（解决方案）为中心，将当前与内外因素相连，从小处着手并迭代。避免断言，以假设方式推进。"
-    elif l == "ja":
+    elif lang_key == "ja":
         pos_text = POS_TEXT_JA
         orient_u, orient_r = "正", "逆"
         sol_tmpl = "ソリューション: 「{m}」を小さな行動として今日始めましょう。"
         sup_tmpl = "サポート: 「{m}」の観点から小さな実験を一つ加えてください。"
         summary_text = "流れの要約: 8番(ソリューション)を中心に現在と内外の要因をつなぎ、小さく始め反復してください。断定は避け、仮説として進みましょう。"
-    elif l == "ko":
+    elif lang_key == "ko":
         pos_text = POS_TEXT_KO
         orient_u, orient_r = "정", "역"
         sol_tmpl = "솔루션: {m}을(를) 오늘 작은 실행으로 시작하세요."
@@ -95,16 +99,16 @@ def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], 
         top = ", ".join((meanings or [])[:2]) if meanings else ""
         orient = orient_u if not it.is_reversed else orient_r
         lines.append(f"{it.position}. {pos_text.get(it.position, '')}: {card.name} ({orient}) - {top}")
-        if it.position == 8 and meanings:
+        if it.position == SOLUTION_POSITION and meanings:
             advices.append(sol_tmpl.format(m=meanings[0]))
     for it in reading.items:
-        if len(advices) >= 3:
+        if len(advices) >= EXPECTED_ADVICES:
             break
         meanings = it.card.upright_meaning if not it.is_reversed else it.card.reversed_meaning
         if meanings:
             advices.append(sup_tmpl.format(m=meanings[0]))
     summary = summary_text
-    return lines, advices[:3], summary
+    return lines, advices[:EXPECTED_ADVICES], summary
 
 
 def interpret_local(reading: ReadingResponse, lang: str) -> InterpretResponse:
@@ -248,7 +252,7 @@ def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model:
         parsed_summary = None
         parsed_advices = None
 
-    if parsed_summary and parsed_advices and len(parsed_advices) == 3:
+    if parsed_summary and parsed_advices and len(parsed_advices) == EXPECTED_ADVICES:
         return InterpretResponse(
             id=reading.id or "",
             lang=lang,
@@ -263,8 +267,8 @@ def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model:
     adv = advices
     if "- " in text:
         parts = [ln.strip("- ") for ln in text.splitlines() if ln.strip().startswith("-")]
-        if len(parts) >= 3:
-            adv = parts[:3]
+        if len(parts) >= EXPECTED_ADVICES:
+            adv = parts[:EXPECTED_ADVICES]
     return InterpretResponse(
         id=reading.id or "",
         lang=lang,

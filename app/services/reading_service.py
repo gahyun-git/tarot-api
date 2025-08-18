@@ -4,6 +4,11 @@ from typing import Any
 from app.utils.rand import fisher_yates_shuffle_with_rng
 
 
+GROUP_COUNT = 3
+DRAW_COUNT = 8
+REVERSED_PROBABILITY = 0.5
+
+
 def split_into_three_groups(cards: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     if len(cards) < 3:
         raise ValueError("Not enough cards to split")
@@ -31,17 +36,17 @@ def shuffle_n_times(cards: list[dict[str, Any]], times: int, rng: random.Random)
 
 
 def draw_eight(cards: list[dict[str, Any]], rng: random.Random, allow_reversed: bool) -> list[dict[str, Any]]:
-    if len(cards) < 8:
+    if len(cards) < DRAW_COUNT:
         raise ValueError("Not enough cards in deck")
     drawn = []
-    for idx, card in enumerate(cards[:8]):
-        is_reversed = allow_reversed and (rng.random() < 0.5)
+    for idx, card in enumerate(cards[:DRAW_COUNT]):
+        is_reversed = allow_reversed and (rng.random() < REVERSED_PROBABILITY)
         drawn.append({"position": idx + 1, "is_reversed": is_reversed, "card": card})
     return drawn
 
 
 def create_reading(cards: list[dict[str, Any]], order: list[str], shuffle_times: int, seed: int | None, allow_reversed: bool):
-    if len(cards) < 8:
+    if len(cards) < DRAW_COUNT:
         raise ValueError("Not enough cards in deck")
     rng = random.Random(seed)
     groups = split_into_three_groups(cards)

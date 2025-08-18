@@ -4,16 +4,16 @@ import uuid
 from typing import Callable
 
 from fastapi import Request, Response
+from starlette.responses import PlainTextResponse
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 async def request_id_middleware(request: Request, call_next: Callable):
     # Body size guard (Content-Length fast path)
-    from app.core.config import settings
     cl = request.headers.get("content-length")
     if cl and cl.isdigit() and int(cl) > settings.max_body_bytes:
-        from starlette.responses import PlainTextResponse
         return PlainTextResponse("Payload Too Large", status_code=413)
     request_id = request.headers.get("x-request-id", str(uuid.uuid4()))
     request.state.request_id = request_id

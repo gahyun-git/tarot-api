@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import JSONResponse, Response
 
 from app.core.config import settings
 from app.core.deps import get_deck_loader
@@ -15,10 +16,8 @@ def list_cards(request: Request, deck = Depends(get_deck_loader)):
     etag = getattr(deck, "etag", None)
     inm = request.headers.get("if-none-match")
     if etag and inm == etag:
-        from starlette.responses import Response
         return Response(status_code=304)
     items = [Card(**c).model_dump() for c in deck.cards]
-    from fastapi.responses import JSONResponse
     resp = JSONResponse(content={"total": len(items), "items": items})
     if etag:
         resp.headers["ETag"] = etag
