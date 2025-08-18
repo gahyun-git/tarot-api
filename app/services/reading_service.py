@@ -8,7 +8,9 @@ DRAW_COUNT = 8
 REVERSED_PROBABILITY = 0.5
 
 
-def split_into_three_groups(cards: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+def split_into_three_groups(
+    cards: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     if len(cards) < GROUP_COUNT:
         raise ValueError("Not enough cards to split")
     # 균등 분할(78장 기준 26장씩)
@@ -19,7 +21,10 @@ def split_into_three_groups(cards: list[dict[str, Any]]) -> tuple[list[dict[str,
     return a, b, c
 
 
-def merge_by_order(groups: tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]], order: list[str]) -> list[dict[str, Any]]:
+def merge_by_order(
+    groups: tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]],
+    order: list[str],
+) -> list[dict[str, Any]]:
     mapping = {"A": 0, "B": 1, "C": 2}
     merged: list[dict[str, Any]] = []
     for key in order:
@@ -27,14 +32,18 @@ def merge_by_order(groups: tuple[list[dict[str, Any]], list[dict[str, Any]], lis
     return merged
 
 
-def shuffle_n_times(cards: list[dict[str, Any]], times: int, rng: random.Random) -> list[dict[str, Any]]:
+def shuffle_n_times(
+    cards: list[dict[str, Any]], times: int, rng: random.Random
+) -> list[dict[str, Any]]:
     shuffled = list(cards)
     for _ in range(times):
         shuffled = fisher_yates_shuffle_with_rng(shuffled, rng)
     return shuffled
 
 
-def draw_eight(cards: list[dict[str, Any]], rng: random.Random, allow_reversed: bool) -> list[dict[str, Any]]:
+def draw_eight(
+    cards: list[dict[str, Any]], rng: random.Random, allow_reversed: bool
+) -> list[dict[str, Any]]:
     if len(cards) < DRAW_COUNT:
         raise ValueError("Not enough cards in deck")
     drawn = []
@@ -44,7 +53,13 @@ def draw_eight(cards: list[dict[str, Any]], rng: random.Random, allow_reversed: 
     return drawn
 
 
-def create_reading(cards: list[dict[str, Any]], order: list[str], shuffle_times: int, seed: int | None, allow_reversed: bool):
+def create_reading(
+    cards: list[dict[str, Any]],
+    order: list[str],
+    shuffle_times: int,
+    seed: int | None,
+    allow_reversed: bool,
+):
     if len(cards) < DRAW_COUNT:
         raise ValueError("Not enough cards in deck")
     rng = random.Random(seed)

@@ -23,10 +23,46 @@ from app.services.reading_service import create_reading as core_create_reading
 
 
 def _role_map_for_lang(lang_norm: str) -> dict[int, str]:
-    roles_ko = {1: "이슈", 2: "숨은 영향", 3: "과거", 4: "현재", 5: "근미래", 6: "내면", 7: "외부", 8: "솔루션"}
-    roles_en = {1: "Issue", 2: "Hidden Influence", 3: "Past", 4: "Present", 5: "Near Future", 6: "Inner", 7: "Outer", 8: "Solution"}
-    roles_ja = {1: "課題", 2: "潜在的影響", 3: "過去", 4: "現在", 5: "近未来", 6: "内面", 7: "外部", 8: "ソリューション"}
-    roles_zh = {1: "议题", 2: "潜在影响", 3: "过去", 4: "现在", 5: "近未来", 6: "内在", 7: "外在", 8: "解决方案"}
+    roles_ko = {
+        1: "이슈",
+        2: "숨은 영향",
+        3: "과거",
+        4: "현재",
+        5: "근미래",
+        6: "내면",
+        7: "외부",
+        8: "솔루션",
+    }
+    roles_en = {
+        1: "Issue",
+        2: "Hidden Influence",
+        3: "Past",
+        4: "Present",
+        5: "Near Future",
+        6: "Inner",
+        7: "Outer",
+        8: "Solution",
+    }
+    roles_ja = {
+        1: "課題",
+        2: "潜在的影響",
+        3: "過去",
+        4: "現在",
+        5: "近未来",
+        6: "内面",
+        7: "外部",
+        8: "ソリューション",
+    }
+    roles_zh = {
+        1: "议题",
+        2: "潜在影响",
+        3: "过去",
+        4: "现在",
+        5: "近未来",
+        6: "内在",
+        7: "外在",
+        8: "解决方案",
+    }
     lang_key = (lang_norm or "en").lower()
     if lang_key.startswith("zh"):
         return roles_zh
@@ -37,7 +73,9 @@ def _role_map_for_lang(lang_norm: str) -> dict[int, str]:
     return roles_en
 
 
-def _build_items_with_context(found: ReadingResponse, deck, lang_norm: str) -> list[CardWithContext]:
+def _build_items_with_context(
+    found: ReadingResponse, deck, lang_norm: str
+) -> list[CardWithContext]:
     items: list[CardWithContext] = []
     role_map = _role_map_for_lang(lang_norm)
     for it in found.items:
@@ -54,7 +92,9 @@ def _build_items_with_context(found: ReadingResponse, deck, lang_norm: str) -> l
     return items
 
 
-def _load_or_compute_interpretation(repo, found: ReadingResponse, lang_norm: str, use_llm: bool, api_key: str | None) -> InterpretResponse:
+def _load_or_compute_interpretation(
+    repo, found: ReadingResponse, lang_norm: str, use_llm: bool, api_key: str | None
+) -> InterpretResponse:
     cached = repo.get_interpretation(found.id or "", lang_norm, "concise", use_llm)
     if cached:
         return cached
@@ -79,7 +119,11 @@ def _maybe_attach_details(ctx: ResultContext, items: list[CardWithContext]) -> N
     if not ctx.use_llm or not ctx.api_key:
         return
     cached_details = ctx.repo.get_details(ctx.reading.id or "", ctx.lang_norm, True)
-    details = cached_details if cached_details else explain_cards_with_llm(ctx.reading, ctx.lang_norm, ctx.api_key)
+    details = (
+        cached_details
+        if cached_details
+        else explain_cards_with_llm(ctx.reading, ctx.lang_norm, ctx.api_key)
+    )
     if not cached_details:
         ctx.repo.save_details(ctx.reading.id or "", ctx.lang_norm, True, details)
     for i, d in enumerate(details):
@@ -95,8 +139,13 @@ def create_and_save_reading(repo, deck, payload: ReadingRequest) -> ReadingRespo
         seed=payload.seed,
         allow_reversed=payload.allow_reversed,
     )
-    items = [DrawnCard(position=i["position"], is_reversed=i["is_reversed"], card=Card(**i["card"])) for i in items_raw]
-    resp = ReadingResponse(question=payload.question, order=payload.group_order, count=len(items), items=items)
+    items = [
+        DrawnCard(position=i["position"], is_reversed=i["is_reversed"], card=Card(**i["card"]))
+        for i in items_raw
+    ]
+    resp = ReadingResponse(
+        question=payload.question, order=payload.group_order, count=len(items), items=items
+    )
     repo.create(resp)
     return resp
 
@@ -137,7 +186,9 @@ def get_full_result(params: FullResultParams) -> FullReadingResult:
     )
 
 
-def interpret_and_cache(repo, reading_id: str, payload: InterpretRequest, api_key: str | None) -> InterpretResponse:
+def interpret_and_cache(
+    repo, reading_id: str, payload: InterpretRequest, api_key: str | None
+) -> InterpretResponse:
     found = repo.get(reading_id)
     if not found:
         raise ValueError("reading not found")
@@ -147,12 +198,18 @@ def interpret_and_cache(repo, reading_id: str, payload: InterpretRequest, api_ke
     cached = repo.get_interpretation(reading_id, lang_norm, payload.style, use_llm)
     if cached:
         return cached
-    result = interpret_with_llm(found, lang_norm, api_key) if use_llm else interpret_local(found, lang_norm)
+    result = (
+        interpret_with_llm(found, lang_norm, api_key)
+        if use_llm
+        else interpret_local(found, lang_norm)
+    )
     repo.save_interpretation(result, lang_norm, payload.style, use_llm)
     return result
 
 
-def daily_fortune_result(deck, lang: str, seed: int | None, use_llm: bool, api_key: str | None) -> DailyFortuneResponse:
+def daily_fortune_result(
+    deck, lang: str, seed: int | None, use_llm: bool, api_key: str | None
+) -> DailyFortuneResponse:
     today = datetime.now(timezone.utc).date().isoformat()
     rng = _random.Random(seed)
     cards = deck.cards
@@ -171,8 +228,18 @@ def daily_fortune_result(deck, lang: str, seed: int | None, use_llm: bool, api_k
         used_meanings=(m[:3] if m else None),
         card=Card(**picked),
     )
-    dummy_reading = ReadingResponse(id="", question=q, order=[], count=1, items=[DrawnCard(position=1, is_reversed=is_reversed, card=Card(**picked))])
-    interp = interpret_with_llm(dummy_reading, lang_norm, api_key) if (use_llm and api_key) else interpret_local(dummy_reading, lang_norm)
-    return DailyFortuneResponse(date=today, lang=lang_norm, card=card_ctx, summary=interp.summary, llm_used=interp.llm_used)
-
-
+    dummy_reading = ReadingResponse(
+        id="",
+        question=q,
+        order=[],
+        count=1,
+        items=[DrawnCard(position=1, is_reversed=is_reversed, card=Card(**picked))],
+    )
+    interp = (
+        interpret_with_llm(dummy_reading, lang_norm, api_key)
+        if (use_llm and api_key)
+        else interpret_local(dummy_reading, lang_norm)
+    )
+    return DailyFortuneResponse(
+        date=today, lang=lang_norm, card=card_ctx, summary=interp.summary, llm_used=interp.llm_used
+    )

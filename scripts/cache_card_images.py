@@ -21,7 +21,9 @@ def download(url: str, dest: Path, overwrite: bool) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Cache tarot card images locally from current dataset image_url")
+    parser = argparse.ArgumentParser(
+        description="Cache tarot card images locally from current dataset image_url"
+    )
     parser.add_argument("--data", default="data/tarot-images.json", help="path to deck json")
     parser.add_argument("--out", default="static/cards", help="output directory for images")
     parser.add_argument("--force", action="store_true", help="overwrite existing files")
@@ -54,5 +56,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

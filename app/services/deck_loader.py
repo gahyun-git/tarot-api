@@ -8,7 +8,9 @@ logger = logging.getLogger(__name__)
 
 
 class DeckLoader:
-    def __init__(self, data_path: str, meanings_path: str | None = None, prefer_local_images: bool = True):
+    def __init__(
+        self, data_path: str, meanings_path: str | None = None, prefer_local_images: bool = True
+    ):
         self._data_path = Path(data_path)
         self._meanings_path = Path(meanings_path) if meanings_path else None
         self._cards: list[dict[str, Any]] = []
@@ -66,7 +68,9 @@ class DeckLoader:
                         if "reversed" in val:
                             card["reversed_meaning"] = val["reversed"]
                         merged_count += 1
-                logger.info("Merged meanings for %d cards from %s", merged_count, self._meanings_path)
+                logger.info(
+                    "Merged meanings for %d cards from %s", merged_count, self._meanings_path
+                )
         except Exception:
             logger.exception("Failed to load meanings file")
 
@@ -102,7 +106,7 @@ class DeckLoader:
         h.update(ids.encode())
         if self._meanings_path and self._meanings_path.exists():
             h.update(str(self._meanings_path.stat().st_mtime_ns).encode())
-        self._etag = f"W/\"{h.hexdigest()}\""
+        self._etag = f'W/"{h.hexdigest()}"'
 
     @property
     def etag(self) -> str | None:

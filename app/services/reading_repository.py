@@ -30,12 +30,16 @@ class ReadingRepository:
             return self._store.get(reading_id)
 
     # --- interpretations cache ---
-    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> InterpretResponse | None:
+    def get_interpretation(
+        self, reading_id: str, lang: str, style: str, use_llm: bool
+    ) -> InterpretResponse | None:
         key = (reading_id, lang, style, use_llm)
         with self._lock:
             return self._interpretations.get(key)
 
-    def save_interpretation(self, data: InterpretResponse, lang: str, style: str, use_llm: bool) -> None:
+    def save_interpretation(
+        self, data: InterpretResponse, lang: str, style: str, use_llm: bool
+    ) -> None:
         key = (data.id, lang, style, use_llm)
         with self._lock:
             self._interpretations[key] = data
@@ -151,8 +155,16 @@ class PostgresReadingRepository:
                             item.card.name,
                             item.card.arcana,
                             item.card.image_url,
-                            Jsonb(item.card.upright_meaning) if item.card.upright_meaning is not None else None,
-                            Jsonb(item.card.reversed_meaning) if item.card.reversed_meaning is not None else None,
+                            (
+                                Jsonb(item.card.upright_meaning)
+                                if item.card.upright_meaning is not None
+                                else None
+                            ),
+                            (
+                                Jsonb(item.card.reversed_meaning)
+                                if item.card.reversed_meaning is not None
+                                else None
+                            ),
                         ),
                     )
             conn.commit()
@@ -162,9 +174,9 @@ class PostgresReadingRepository:
     def get(self, reading_id: str) -> ReadingResponse | None:
         with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
             cur.execute(
-                    "SELECT id, question, ord_a, ord_b, ord_c FROM readings WHERE id=%s",
-                    (reading_id,),
-                )
+                "SELECT id, question, ord_a, ord_b, ord_c FROM readings WHERE id=%s",
+                (reading_id,),
+            )
             row = cur.fetchone()
             if not row:
                 return None
@@ -192,17 +204,30 @@ class PostgresReadingRepository:
                     reversed_meaning=(reversed if isinstance(reversed, list) else None),
                 ),
             )
-            for (pos, is_rev, card_id, card_name, arcana, image_url, upright, reversed) in items_rows
+            for (
+                pos,
+                is_rev,
+                card_id,
+                card_name,
+                arcana,
+                image_url,
+                upright,
+                reversed,
+            ) in items_rows
         ]
-        return ReadingResponse(id=str(rid), question=question, order=order, count=len(items), items=items)
+        return ReadingResponse(
+            id=str(rid), question=question, order=order, count=len(items), items=items
+        )
 
     # --- interpretations cache ---
-    def get_interpretation(self, reading_id: str, lang: str, style: str, use_llm: bool) -> InterpretResponse | None:
+    def get_interpretation(
+        self, reading_id: str, lang: str, style: str, use_llm: bool
+    ) -> InterpretResponse | None:
         with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
             cur.execute(
-                    "SELECT summary, advices, llm_used, sections FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
-                    (reading_id, lang, style, use_llm),
-                )
+                "SELECT summary, advices, llm_used, sections FROM interpretations WHERE reading_id=%s AND lang=%s AND style=%s AND use_llm=%s",
+                (reading_id, lang, style, use_llm),
+            )
             row = cur.fetchone()
             if not row:
                 return None
@@ -217,35 +242,41 @@ class PostgresReadingRepository:
             sections=sections if isinstance(sections, dict) else None,
         )
 
-    def save_interpretation(self, data: InterpretResponse, lang: str, style: str, use_llm: bool) -> None:
+    def save_interpretation(
+        self, data: InterpretResponse, lang: str, style: str, use_llm: bool
+    ) -> None:
         with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
             cur.execute(
-                    """
+                """
                     INSERT INTO interpretations (reading_id, lang, style, use_llm, summary, advices, llm_used, sections)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT (reading_id, lang, style, use_llm)
                     DO UPDATE SET summary=EXCLUDED.summary, advices=EXCLUDED.advices, llm_used=EXCLUDED.llm_used, sections=EXCLUDED.sections
                     """,
+                (
+                    data.id,
+                    lang,
+                    style,
+                    use_llm,
+                    data.summary,
+                    Jsonb(data.advices),
+                    data.llm_used,
                     (
-                        data.id,
-                        lang,
-                        style,
-                        use_llm,
-                        data.summary,
-                        Jsonb(data.advices),
-                        data.llm_used,
-                        Jsonb(getattr(data, "sections", None)) if getattr(data, "sections", None) is not None else None,
+                        Jsonb(getattr(data, "sections", None))
+                        if getattr(data, "sections", None) is not None
+                        else None
                     ),
-                )
+                ),
+            )
             conn.commit()
 
     # --- per-card details cache (LLM) ---
     def get_details(self, reading_id: str, lang: str, use_llm: bool) -> list[str] | None:
         with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
             cur.execute(
-                    "SELECT details FROM interpretation_details WHERE reading_id=%s AND lang=%s AND use_llm=%s",
-                    (reading_id, lang, use_llm),
-                )
+                "SELECT details FROM interpretation_details WHERE reading_id=%s AND lang=%s AND use_llm=%s",
+                (reading_id, lang, use_llm),
+            )
             row = cur.fetchone()
             if not row:
                 return None
@@ -255,14 +286,12 @@ class PostgresReadingRepository:
     def save_details(self, reading_id: str, lang: str, use_llm: bool, details: list[str]) -> None:
         with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
             cur.execute(
-                    """
+                """
                     INSERT INTO interpretation_details (reading_id, lang, use_llm, details)
                     VALUES (%s,%s,%s,%s)
                     ON CONFLICT (reading_id, lang, use_llm)
                     DO UPDATE SET details=EXCLUDED.details
                     """,
-                    (reading_id, lang, use_llm, Jsonb(details)),
-                )
+                (reading_id, lang, use_llm, Jsonb(details)),
+            )
             conn.commit()
-
-

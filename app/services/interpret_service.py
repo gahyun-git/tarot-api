@@ -78,7 +78,8 @@ def _cards_context(reading: ReadingResponse, pos_map: dict[int, str]) -> list[di
             "name": it.card.name,
             "arcana": it.card.arcana,
             "is_reversed": it.is_reversed,
-            "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
+            "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning)
+            or [],
         }
         for it in reading.items
     ]
@@ -91,24 +92,31 @@ def _schema_for_lkey(lkey: str) -> tuple[list[str], list[str]]:
         "ja": ["現在", "過去", "近未来", "内面", "外部", "課題"],
         "zh": ["现在", "过去", "近未来", "内在", "外在", "议题"],
     }
-    orient = {"ko": ["정", "역"], "en": ["upright", "reversed"], "ja": ["正", "逆"], "zh": ["正位", "逆位"]}
+    orient = {
+        "ko": ["정", "역"],
+        "en": ["upright", "reversed"],
+        "ja": ["正", "逆"],
+        "zh": ["正位", "逆位"],
+    }
     lang_map = "zh" if lkey.startswith("zh") else (lkey if lkey in {"ko", "en", "ja"} else "en")
     return sections_keys[lang_map], orient[lang_map]
 
 
 def _schema_sections_str(sec: list[str]) -> str:
     return ", ".join(
-        [f"\"{s}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}" for s in sec]
+        [f'"{s}": {{"card": string, "orientation": string, "analysis": string}}' for s in sec]
     )
 
 
-def _build_prompt(lang: str, question: str, schema_sections: str, ori: list[str], draft: dict) -> str:
+def _build_prompt(
+    lang: str, question: str, schema_sections: str, ori: list[str], draft: dict
+) -> str:
     return (
         f"You are a tarot master with 30 years of experience. Respond in language: {lang}.\n"
         f"Use compassionate yet piercing insight. Avoid deterministic claims and avoid medical/legal/financial guidance.\n"
         f"IMPORTANT: Base ALL interpretation ONLY on the following 8 cards (names/roles/orientation/meanings). Do NOT invent other cards.\n"
         f"Produce STRICT JSON (minified, no comments, no extra text).\n"
-        f"Schema: {{\"summary\": string, \"sections\": {{{schema_sections}}}, \"advices\": [{{\"type\":\"solution\"|\"support\", \"text\": string}}, {{...}}, {{...}}] }}\n"
+        f'Schema: {{"summary": string, "sections": {{{schema_sections}}}, "advices": [{{"type":"solution"|"support", "text": string}}, {{...}}, {{...}}] }}\n'
         f"Rules:\n"
         f"1) Address the user's question first: '{question}'.\n"
         f"2) Summary: 5-7 sentences; do NOT include [pos#] citations; write naturally; ground in cards.\n"
@@ -140,7 +148,9 @@ def _parse_output(text: str) -> tuple[str | None, list[str] | None, dict | None]
         summary = str(obj["summary"]).strip()
         adv_list = obj.get("advices") or []
         advices = (
-            [str(a.get("text", "")).strip() if isinstance(a, dict) else str(a) for a in adv_list][:EXPECTED_ADVICES]
+            [str(a.get("text", "")).strip() if isinstance(a, dict) else str(a) for a in adv_list][
+                :EXPECTED_ADVICES
+            ]
             if isinstance(adv_list, list)
             else None
         )
@@ -149,14 +159,15 @@ def _parse_output(text: str) -> tuple[str | None, list[str] | None, dict | None]
     except Exception:
         return None, None, None
 
+
 def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], list[str], str]:
     # select language map
     lang_key = (lang or "en").lower()
     if lang_key.startswith("zh"):
         pos_text = POS_TEXT_ZH
         orient_u, orient_r = "正位", "逆位"
-        sol_tmpl = "解决方案：今天用\"{m}\"开始一个小的行动。"
-        sup_tmpl = "支持：从\"{m}\"的视角加入一个小实验。"
+        sol_tmpl = '解决方案：今天用"{m}"开始一个小的行动。'
+        sup_tmpl = '支持：从"{m}"的视角加入一个小实验。'
         summary_text = "流程摘要：以第8位（解决方案）为中心，将当前与内外因素相连，从小处着手并迭代。避免断言，以假设方式推进。"
     elif lang_key == "ja":
         pos_text = POS_TEXT_JA
@@ -169,17 +180,13 @@ def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], 
         orient_u, orient_r = "정", "역"
         sol_tmpl = "솔루션: {m}을(를) 오늘 작은 실행으로 시작하세요."
         sup_tmpl = "보조: {m} 관점에서 한 가지 실험을 추가하세요."
-        summary_text = (
-            "흐름 요약: 8번 솔루션을 중심으로 현재 상황과 내외부 요인을 연결해 작게 시작하고, 반복적으로 보완하세요. 단정하지 말고 가설로 접근하세요."
-        )
+        summary_text = "흐름 요약: 8번 솔루션을 중심으로 현재 상황과 내외부 요인을 연결해 작게 시작하고, 반복적으로 보완하세요. 단정하지 말고 가설로 접근하세요."
     else:
         pos_text = POS_TEXT_EN
         orient_u, orient_r = "upright", "reversed"
         sol_tmpl = "Solution: Start a small action today with '{m}'."
         sup_tmpl = "Support: Add one small experiment from the '{m}' perspective."
-        summary_text = (
-            "Flow summary: Center on position 8 (Solution), link the present with inner/outer factors, start small and iterate. Avoid determinism; proceed as hypotheses."
-        )
+        summary_text = "Flow summary: Center on position 8 (Solution), link the present with inner/outer factors, start small and iterate. Avoid determinism; proceed as hypotheses."
     lines: list[str] = []
     advices: list[str] = []
     for it in reading.items:
@@ -187,7 +194,9 @@ def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], 
         meanings = card.upright_meaning if not it.is_reversed else card.reversed_meaning
         top = ", ".join((meanings or [])[:2]) if meanings else ""
         orient = orient_u if not it.is_reversed else orient_r
-        lines.append(f"{it.position}. {pos_text.get(it.position, '')}: {card.name} ({orient}) - {top}")
+        lines.append(
+            f"{it.position}. {pos_text.get(it.position, '')}: {card.name} ({orient}) - {top}"
+        )
         if it.position == SOLUTION_POSITION and meanings:
             advices.append(sol_tmpl.format(m=meanings[0]))
     for it in reading.items:
@@ -228,7 +237,9 @@ def detect_lang(text: str) -> str:
     return "en"
 
 
-def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash") -> InterpretResponse:
+def interpret_with_llm(
+    reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash"
+) -> InterpretResponse:
     lang = detect_lang(reading.question) if lang == "auto" else lang
     lines, advices, _ = _lines_and_advices(reading, lang)
     lkey = (lang or "en").lower()
@@ -275,7 +286,9 @@ def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model:
     )
 
 
-def explain_cards_with_llm(reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash") -> list[str]:
+def explain_cards_with_llm(
+    reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash"
+) -> list[str]:
     if genai is None:
         return [""] * len(reading.items)
     genai.configure(api_key=api_key)
@@ -303,12 +316,17 @@ def explain_cards_with_llm(reading: ReadingResponse, lang: str, api_key: str, mo
     cards_ctx = []
     for it in reading.items:
         ori_val = _orientation_value(lkey, it.is_reversed)
-        cards_ctx.append({
-            "role": pos_text.get(it.position, ""),
-            "name": it.card.name,
-            "orientation": ori_val,
-            "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
-        })
+        cards_ctx.append(
+            {
+                "role": pos_text.get(it.position, ""),
+                "name": it.card.name,
+                "orientation": ori_val,
+                "meanings": (
+                    it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning
+                )
+                or [],
+            }
+        )
     prompt = (
         f"You are a tarot master with 30 years of experience. Respond in language: {lang}.\n"
         f"For each card below, write a 2-3 sentence analysis tailored to the user's question: '{reading.question}'.\n"
@@ -330,5 +348,3 @@ def explain_cards_with_llm(reading: ReadingResponse, lang: str, api_key: str, mo
     except Exception:
         pass
     return [""] * len(cards_ctx)
-
-

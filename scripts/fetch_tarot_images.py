@@ -13,6 +13,7 @@ DATA_PATH = ROOT / "data" / "tarot-images.json"
 
 REQUIRED_KEYS = {"id", "name", "arcana"}
 
+
 def fetch() -> list[dict[str, Any]]:
     with httpx.Client(timeout=15.0, follow_redirects=True) as client:
         r = client.get(RAW_URL)
@@ -30,13 +31,15 @@ def fetch() -> list[dict[str, Any]]:
         suit = c.get("suit")
         img = c.get("img")
         image_url = f"{CARDS_BASE}{img}" if img else None
-        mapped.append({
-            "id": idx,
-            "name": name,
-            "arcana": arcana,
-            "suit": suit,
-            "image_url": image_url,
-        })
+        mapped.append(
+            {
+                "id": idx,
+                "name": name,
+                "arcana": arcana,
+                "suit": suit,
+                "image_url": image_url,
+            }
+        )
     return mapped
 
 

@@ -1,4 +1,3 @@
-
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -30,7 +29,9 @@ class Settings(BaseSettings):
     rate_limit_default: str = Field(default="60/minute", validation_alias="RATE_LIMIT_DEFAULT")
     rate_limit_health: str = Field(default="5/second", validation_alias="RATE_LIMIT_HEALTH")
     rate_limit_cards: str = Field(default="120/minute", validation_alias="RATE_LIMIT_CARDS")
-    rate_limit_reading_post: str = Field(default="10/minute", validation_alias="RATE_LIMIT_READING_POST")
+    rate_limit_reading_post: str = Field(
+        default="10/minute", validation_alias="RATE_LIMIT_READING_POST"
+    )
 
     @field_validator("cors_origins", mode="before")
     @classmethod

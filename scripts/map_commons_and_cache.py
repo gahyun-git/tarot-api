@@ -72,7 +72,9 @@ def download(url: str, dest: Path) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Map to Wikimedia Commons images by card name and cache locally")
+    parser = argparse.ArgumentParser(
+        description="Map to Wikimedia Commons images by card name and cache locally"
+    )
     parser.add_argument("--data", default="data/tarot-images.json")
     parser.add_argument("--out", default="static/cards")
     parser.add_argument("--force", action="store_true")
@@ -105,5 +107,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

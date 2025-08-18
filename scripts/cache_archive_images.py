@@ -81,7 +81,9 @@ def download_and_save_png_as_jpg(url: str, dest: Path, quality: int = 85) -> Non
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Cache 78 archive.org PD images → static/cards/*.jpg")
+    parser = argparse.ArgumentParser(
+        description="Cache 78 archive.org PD images → static/cards/*.jpg"
+    )
     parser.add_argument("--out", default="static/cards")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--quality", type=int, default=85)
@@ -108,5 +110,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

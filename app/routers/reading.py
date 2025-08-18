@@ -45,7 +45,11 @@ def get_reading(request: Request, reading_id: str):
     return found
 
 
-@router.post("/{reading_id}/interpret", response_model=InterpretResponse, dependencies=[Depends(require_api_auth)])
+@router.post(
+    "/{reading_id}/interpret",
+    response_model=InterpretResponse,
+    dependencies=[Depends(require_api_auth)],
+)
 @limiter.limit(settings.rate_limit_reading_post)
 def interpret_reading(request: Request, reading_id: str, payload: InterpretRequest):
     repo = get_reading_repo(request)
@@ -69,7 +73,9 @@ def get_full_result(request: Request, reading_id: str, lang: str = "ko", use_llm
 
 @router.get("/daily", response_model=DailyFortuneResponse)
 @limiter.limit(settings.rate_limit_cards)
-def daily_fortune(request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False):
+def daily_fortune(
+    request: Request, lang: str = "auto", seed: int | None = None, use_llm: bool = False
+):
     deck = get_deck_loader(request)
     return daily_fortune_result(deck, lang, seed, use_llm, settings.google_api_key)
 
@@ -80,6 +86,19 @@ def list_spreads(request: Request):
     # 기본 8장 스프레드와 1장(오늘의 운세)
     items = [
         SpreadInfo(code="daily", name="Daily One Card", positions={1: "Issue"}).model_dump(),
-        SpreadInfo(code="8-basic", name="Eight Positions", positions={1: "Issue", 2: "Hidden Influence", 3: "Past", 4: "Present", 5: "Near Future", 6: "Inner", 7: "Outer", 8: "Solution"}).model_dump(),
+        SpreadInfo(
+            code="8-basic",
+            name="Eight Positions",
+            positions={
+                1: "Issue",
+                2: "Hidden Influence",
+                3: "Past",
+                4: "Present",
+                5: "Near Future",
+                6: "Inner",
+                7: "Outer",
+                8: "Solution",
+            },
+        ).model_dump(),
     ]
     return JSONResponse(content={"items": items})

@@ -61,7 +61,9 @@ class InterpretResponse(BaseModel):
     positions: list[str]
     advices: list[str]
     llm_used: bool
-    sections: Optional[dict[str, dict[str, str]]] = None  # { role: { card, orientation, analysis } }
+    sections: Optional[dict[str, dict[str, str]]] = (
+        None  # { role: { card, orientation, analysis } }
+    )
 
 
 class CardWithContext(BaseModel):
