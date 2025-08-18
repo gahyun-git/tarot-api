@@ -23,7 +23,6 @@ POS_TEXT_KO = {
 }
 
 # --- Sanitization helpers ----------------------------------------------------
-import re
 
 def _sanitize_text(text: str, reading: ReadingResponse) -> str:
     """Remove card names and orientation tokens from plain text to improve readability."""
@@ -270,7 +269,8 @@ def detect_lang(text: str) -> str:
 def interpret_with_llm(
     reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash"
 ) -> InterpretResponse:
-    lang = detect_lang(reading.question) if lang == "auto" else lang
+    # 항상 질문 언어에 맞춰 응답 (설정 언어 무시)
+    lang = detect_lang(reading.question)
     lines, advices, _ = _lines_and_advices(reading, lang)
     lkey = (lang or "en").lower()
     draft = {
@@ -321,6 +321,8 @@ def interpret_with_llm(
 def explain_cards_with_llm(
     reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash"
 ) -> list[str]:
+    # 항상 질문 언어에 맞춰 응답 (설정 언어 무시)
+    lang = detect_lang(reading.question)
     if genai is None:
         return [""] * len(reading.items)
     genai.configure(api_key=api_key)

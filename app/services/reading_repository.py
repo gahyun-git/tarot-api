@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import secrets
 import threading
+import time
 import uuid
 
 import psycopg
@@ -17,6 +19,8 @@ class ReadingRepository:
         self._lock = threading.Lock()
         self._interpretations: dict[tuple[str, str, str, bool], InterpretResponse] = {}
         self._details: dict[tuple[str, str, bool], list[str]] = {}
+        self._slug_to_id: dict[str, str] = {}
+        self._id_to_slug: dict[str, str] = {}
 
     def create(self, reading: ReadingResponse) -> str:
         reading_id = str(uuid.uuid4())
@@ -54,6 +58,21 @@ class ReadingRepository:
         key = (reading_id, lang, use_llm)
         with self._lock:
             self._details[key] = list(details)
+
+    # --- share links (in-memory) ---
+    def create_share_slug(self, reading_id: str) -> str:
+        with self._lock:
+            existing = self._id_to_slug.get(reading_id)
+            if existing:
+                return existing
+            slug = f"{int(time.time()*1000)}-{secrets.token_urlsafe(4)[:6]}"
+            self._slug_to_id[slug] = reading_id
+            self._id_to_slug[reading_id] = slug
+            return slug
+
+    def resolve_share_slug(self, slug: str) -> str | None:
+        with self._lock:
+            return self._slug_to_id.get(slug)
 
 
 class PostgresReadingRepository:
@@ -118,6 +137,13 @@ class PostgresReadingRepository:
             UNIQUE (reading_id, lang, use_llm)
         );
         """
+        ddl_share = """
+        CREATE TABLE IF NOT EXISTS share_links (
+            slug TEXT PRIMARY KEY,
+            reading_id UUID UNIQUE REFERENCES readings(id) ON DELETE CASCADE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """
         alter_interp_sections = (
             "ALTER TABLE interpretations ADD COLUMN IF NOT EXISTS sections JSONB"
         )
@@ -127,6 +153,7 @@ class PostgresReadingRepository:
                 cur.execute(ddl_cards)
                 cur.execute(ddl_interp)
                 cur.execute(ddl_details)
+                cur.execute(ddl_share)
                 cur.execute(alter_interp_sections)
                 for stmt in alter_cards_columns:
                     cur.execute(stmt)
@@ -295,3 +322,25 @@ class PostgresReadingRepository:
                 (reading_id, lang, use_llm, Jsonb(details)),
             )
             conn.commit()
+
+    # --- share links (postgres) ---
+    def create_share_slug(self, reading_id: str) -> str:
+        for _ in range(5):
+            slug = f"{int(time.time()*1000)}-{secrets.token_urlsafe(4)[:6]}"
+            try:
+                with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+                    cur.execute(
+                        "INSERT INTO share_links (slug, reading_id) VALUES (%s,%s)",
+                        (slug, reading_id),
+                    )
+                    conn.commit()
+                return slug
+            except Exception:
+                continue
+        return reading_id
+
+    def resolve_share_slug(self, slug: str) -> str | None:
+        with psycopg.connect(self._db_url) as conn, conn.cursor() as cur:
+            cur.execute("SELECT reading_id FROM share_links WHERE slug=%s", (slug,))
+            row = cur.fetchone()
+        return str(row[0]) if row else None

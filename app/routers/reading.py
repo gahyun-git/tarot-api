@@ -24,6 +24,7 @@ from app.services.reading_api_service import (
     get_full_result as service_get_full_result,
     interpret_and_cache,
 )
+from app.services.reading_repository import ReadingRepository
 
 router = APIRouter(prefix="/reading", tags=["reading"])
 
@@ -108,3 +109,13 @@ def list_spreads(request: Request):
         ).model_dump(),
     ]
     return JSONResponse(content={"items": items})
+
+
+@router.get("/s/{slug}")
+@limiter.limit(settings.rate_limit_cards)
+def resolve_share(request: Request, slug: str):
+    repo: ReadingRepository = get_reading_repo(request)
+    rid = repo.resolve_share_slug(slug)
+    if not rid:
+        raise HTTPException(status_code=404, detail="share link not found")
+    return {"reading_id": rid}

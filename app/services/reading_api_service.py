@@ -1,4 +1,5 @@
 import random as _random
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -147,6 +148,10 @@ def create_and_save_reading(repo, deck, payload: ReadingRequest) -> ReadingRespo
         question=payload.question, order=payload.group_order, count=len(items), items=items
     )
     repo.create(resp)
+    # create share slug for convenience
+    if hasattr(repo, "create_share_slug"):
+        with suppress(Exception):
+            repo.create_share_slug(resp.id or "")
     return resp
 
 
