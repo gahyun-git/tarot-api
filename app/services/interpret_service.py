@@ -290,23 +290,29 @@ def explain_cards_with_llm(reading: ReadingResponse, lang: str, api_key: str, mo
         return [""] * len(reading.items)
     genai.configure(api_key=api_key)
     lkey = (lang or "en").lower()
-    if lkey.startswith("zh"):
-        pos_text = POS_TEXT_ZH
-    elif lkey == "ja":
-        pos_text = POS_TEXT_JA
-    elif lkey == "ko":
-        pos_text = POS_TEXT_KO
-    else:
-        pos_text = POS_TEXT_EN
+
+    def _pos_text_for_lang(lk: str) -> dict[int, str]:
+        if lk.startswith("zh"):
+            return POS_TEXT_ZH
+        if lk == "ja":
+            return POS_TEXT_JA
+        if lk == "ko":
+            return POS_TEXT_KO
+        return POS_TEXT_EN
+
+    def _orientation_value(lk: str, is_reversed: bool) -> str:
+        if lk == "ko":
+            return "역" if is_reversed else "정"
+        if lk == "ja":
+            return "逆" if is_reversed else "正"
+        if lk.startswith("zh"):
+            return "逆位" if is_reversed else "正位"
+        return "reversed" if is_reversed else "upright"
+
+    pos_text = _pos_text_for_lang(lkey)
     cards_ctx = []
     for it in reading.items:
-        ori_val = "reversed" if it.is_reversed else "upright"
-        if lkey == "ko":
-            ori_val = "역" if it.is_reversed else "정"
-        elif lkey == "ja":
-            ori_val = "逆" if it.is_reversed else "正"
-        elif lkey.startswith("zh"):
-            ori_val = "逆位" if it.is_reversed else "正位"
+        ori_val = _orientation_value(lkey, it.is_reversed)
         cards_ctx.append({
             "role": pos_text.get(it.position, ""),
             "name": it.card.name,
