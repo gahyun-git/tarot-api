@@ -25,36 +25,8 @@ POS_TEXT_KO = {
 # --- Sanitization helpers ----------------------------------------------------
 
 def _sanitize_text(text: str, reading: ReadingResponse) -> str:
-    """Light cleanup without removing card names to avoid broken Korean particles.
-
-    - Remove bracket citations like [pos1], [1]
-    - Remove parentheses that contain only orientation tokens (정/역/upright/reversed/正/逆/正位/逆位) and commas
-    - Collapse leftover empty parentheses and extra commas/spaces
-    """
-    if not text:
-        return text
-    try:
-        # Remove [pos] style citations if any
-        text = re.sub(r"\s*\[(?:pos|position|p)?\d+\]\s*", " ", text, flags=re.IGNORECASE)
-
-        # Remove parentheses containing only orientation tokens and commas/spaces
-        orientation = r"(?:정|역|upright|reversed|正|逆|正位|逆位)"
-        text = re.sub(rf"\(\s*(?:{orientation})(?:\s*,\s*(?:{orientation}))*\s*\)", "", text, flags=re.IGNORECASE)
-
-        # Remove completely empty or comma-only parentheses like (, ), ( , , )
-        text = re.sub(r"\(\s*(?:,\s*)*\)", "", text)
-
-        # Tidy punctuation: collapse multiple commas/spaces
-        text = re.sub(r",\s*,+", ", ", text)
-        text = re.sub(r"\s+([,.)])", r"\1", text)
-        text = re.sub(r"\(\s+", "(", text)
-        text = re.sub(r"\s+\)", ")", text)
-
-        # Collapse excessive spaces
-        text = re.sub(r"\s{2,}", " ", text).strip()
-        return text
-    except Exception:
-        return text
+    """No-op sanitizer: return text as-is to preserve card names and orientations."""
+    return text or ""
 
 POS_TEXT_EN = {
     1: "Issue",
