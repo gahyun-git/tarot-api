@@ -23,3 +23,15 @@ node_modules/
 
 # Docker
 *.log
+
+# Build artifacts
+htmlcov/
+dist/
+site/
+.coverage*
+coverage.xml
+
+# Tools
+.poetry-cache/
+ruff_cache/
+pytestdebug.log

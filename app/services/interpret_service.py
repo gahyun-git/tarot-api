@@ -60,6 +60,95 @@ EXPECTED_ADVICES = 3
 SOLUTION_POSITION = 8
 
 
+def _pos_text_for_lkey(lkey: str) -> dict[int, str]:
+    if lkey.startswith("zh"):
+        return POS_TEXT_ZH
+    if lkey == "ja":
+        return POS_TEXT_JA
+    if lkey == "ko":
+        return POS_TEXT_KO
+    return POS_TEXT_EN
+
+
+def _cards_context(reading: ReadingResponse, pos_map: dict[int, str]) -> list[dict[str, object]]:
+    return [
+        {
+            "position": it.position,
+            "role": pos_map.get(it.position, ""),
+            "name": it.card.name,
+            "arcana": it.card.arcana,
+            "is_reversed": it.is_reversed,
+            "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
+        }
+        for it in reading.items
+    ]
+
+
+def _schema_for_lkey(lkey: str) -> tuple[list[str], list[str]]:
+    sections_keys = {
+        "ko": ["현재", "과거", "근미래", "내면", "외부", "이슈"],
+        "en": ["Present", "Past", "Near Future", "Inner", "Outer", "Issue"],
+        "ja": ["現在", "過去", "近未来", "内面", "外部", "課題"],
+        "zh": ["现在", "过去", "近未来", "内在", "外在", "议题"],
+    }
+    orient = {"ko": ["정", "역"], "en": ["upright", "reversed"], "ja": ["正", "逆"], "zh": ["正位", "逆位"]}
+    lang_map = "zh" if lkey.startswith("zh") else (lkey if lkey in {"ko", "en", "ja"} else "en")
+    return sections_keys[lang_map], orient[lang_map]
+
+
+def _schema_sections_str(sec: list[str]) -> str:
+    return ", ".join(
+        [f"\"{s}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}" for s in sec]
+    )
+
+
+def _build_prompt(lang: str, question: str, schema_sections: str, ori: list[str], draft: dict) -> str:
+    return (
+        f"You are a tarot master with 30 years of experience. Respond in language: {lang}.\n"
+        f"Use compassionate yet piercing insight. Avoid deterministic claims and avoid medical/legal/financial guidance.\n"
+        f"IMPORTANT: Base ALL interpretation ONLY on the following 8 cards (names/roles/orientation/meanings). Do NOT invent other cards.\n"
+        f"Produce STRICT JSON (minified, no comments, no extra text).\n"
+        f"Schema: {{\"summary\": string, \"sections\": {{{schema_sections}}}, \"advices\": [{{\"type\":\"solution\"|\"support\", \"text\": string}}, {{...}}, {{...}}] }}\n"
+        f"Rules:\n"
+        f"1) Address the user's question first: '{question}'.\n"
+        f"2) Summary: 5-7 sentences; do NOT include [pos#] citations; write naturally; ground in cards.\n"
+        f"3) Use orientation values strictly from this set: ['{ori[0]}','{ori[1]}'].\n"
+        f"4) Exactly 3 advices: first is type=solution and must synthesize the cards with the question; the other two are type=support. Each advice short, actionable, concrete.\n"
+        f"5) Ground every statement in the provided card meanings; do not invent other cards.\n"
+        f"Draft: {json.dumps(draft, ensure_ascii=False)}\n"
+        f"Return ONLY the JSON object."
+    )
+
+
+def _call_llm(model: str, prompt: str) -> str:
+    try:
+        model_obj = genai.GenerativeModel(model)
+        rsp = model_obj.generate_content(prompt)
+        return (rsp.text or "").strip()
+    except Exception:
+        return ""
+
+
+def _parse_output(text: str) -> tuple[str | None, list[str] | None, dict | None]:
+    try:
+        m = re.search(r"\{[\s\S]*\}", text)
+        if not m:
+            return None, None, None
+        obj = json.loads(m.group(0))
+        if not (isinstance(obj, dict) and "summary" in obj and "advices" in obj):
+            return None, None, None
+        summary = str(obj["summary"]).strip()
+        adv_list = obj.get("advices") or []
+        advices = (
+            [str(a.get("text", "")).strip() if isinstance(a, dict) else str(a) for a in adv_list][:EXPECTED_ADVICES]
+            if isinstance(adv_list, list)
+            else None
+        )
+        sections = obj.get("sections")
+        return summary, advices, sections
+    except Exception:
+        return None, None, None
+
 def _lines_and_advices(reading: ReadingResponse, lang: str) -> tuple[list[str], list[str], str]:
     # select language map
     lang_key = (lang or "en").lower()
@@ -141,122 +230,24 @@ def detect_lang(text: str) -> str:
 
 def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model: str = "gemini-1.5-flash") -> InterpretResponse:
     lang = detect_lang(reading.question) if lang == "auto" else lang
-    lines, advices, summary = _lines_and_advices(reading, lang)
+    lines, advices, _ = _lines_and_advices(reading, lang)
     lkey = (lang or "en").lower()
-
-    def _pos_text_for_lang(lk: str) -> dict[int, str]:
-        if lk.startswith("zh"):
-            return POS_TEXT_ZH
-        if lk == "ja":
-            return POS_TEXT_JA
-        if lk == "ko":
-            return POS_TEXT_KO
-        return POS_TEXT_EN
-
-    pos_text = _pos_text_for_lang(lkey)
-
-    def _cards_context() -> list[dict[str, object]]:
-        ctx: list[dict[str, object]] = []
-        for it in reading.items:
-            ctx.append({
-                "position": it.position,
-                "role": pos_text.get(it.position, ""),
-                "name": it.card.name,
-                "arcana": it.card.arcana,
-                "is_reversed": it.is_reversed,
-                "meanings": (it.card.reversed_meaning if it.is_reversed else it.card.upright_meaning) or [],
-            })
-        return ctx
-
     draft = {
         "question": reading.question,
         "positions": lines,
         "advices": advices,
-        "cards": _cards_context(),
-        "guidelines": [
-            "8번 솔루션 중심으로 연결",
-            "단정 금지, 가설/제안 어조",
-            "행동 조언 3개",
-        ],
+        "cards": _cards_context(reading, _pos_text_for_lkey(lkey)),
+        "guidelines": ["8번 솔루션 중심으로 연결", "단정 금지, 가설/제안 어조", "행동 조언 3개"],
     }
     if genai is None:
         return interpret_local(reading, lang)
     genai.configure(api_key=api_key)
-    # Persona + strict JSON schema (언어별 섹션/오리엔테이션)
-    sections_keys = {
-        "ko": ["현재", "과거", "근미래", "내면", "외부", "이슈"],
-        "en": ["Present", "Past", "Near Future", "Inner", "Outer", "Issue"],
-        "ja": ["現在", "過去", "近未来", "内面", "外部", "課題"],
-        "zh": ["现在", "过去", "近未来", "内在", "外在", "议题"],
-    }
-    orient = {
-        "ko": ["정", "역"],
-        "en": ["upright", "reversed"],
-        "ja": ["正", "逆"],
-        "zh": ["正位", "逆位"],
-    }
-    lang_map = "zh" if lkey.startswith("zh") else (lkey if lkey in {"ko", "en", "ja"} else "en")
-    sec = sections_keys[lang_map]
-    ori = orient[lang_map]
-    schema_sections = (
-        f"\"{sec[0]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}, "
-        f"\"{sec[1]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}, "
-        f"\"{sec[2]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}, "
-        f"\"{sec[3]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}, "
-        f"\"{sec[4]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}, "
-        f"\"{sec[5]}\": {{\"card\": string, \"orientation\": string, \"analysis\": string}}"
-    )
-    prompt = (
-        f"You are a tarot master with 30 years of experience. Respond in language: {lang}.\n"
-        f"Use compassionate yet piercing insight. Avoid deterministic claims and avoid medical/legal/financial guidance.\n"
-        f"IMPORTANT: Base ALL interpretation ONLY on the following 8 cards (names/roles/orientation/meanings). Do NOT invent other cards.\n"
-        f"Produce STRICT JSON (minified, no comments, no extra text).\n"
-        f"Schema: {{\"summary\": string, \"sections\": {{{schema_sections}}}, \"advices\": [{{\"type\":\"solution\"|\"support\", \"text\": string}}, {{...}}, {{...}}] }}\n"
-        f"Rules:\n"
-        f"1) Address the user's question first: '{reading.question}'.\n"
-        f"2) Summary: 5-7 sentences; do NOT include [pos#] citations; write naturally; ground in cards.\n"
-        f"3) Use orientation values strictly from this set: ['{ori[0]}','{ori[1]}'].\n"
-        f"4) Exactly 3 advices: first is type=solution and must synthesize the cards with the question; the other two are type=support. Each advice short, actionable, concrete.\n"
-        f"5) Ground every statement in the provided card meanings; do not invent other cards.\n"
-        f"Draft: {json.dumps(draft, ensure_ascii=False)}\n"
-        f"Return ONLY the JSON object."
-    )
-    # Guardrails: model params
-    try:
-        model_obj = genai.GenerativeModel(model)
-        rsp = model_obj.generate_content(prompt)
-        text = (rsp.text or "").strip()
-    except Exception:
-        # 업스트림(LLM) 오류 시 500으로 전파하지 않고 로컬 해석으로 폴백
-        return interpret_local(reading, lang)
+    sec, ori = _schema_for_lkey(lkey)
+    prompt = _build_prompt(lang, reading.question, _schema_sections_str(sec), ori, draft)
+    text = _call_llm(model, prompt)
     if not text:
         return interpret_local(reading, lang)
-    # Try JSON parse first
-    parsed_summary = None
-    parsed_advices: list[str] | None = None
-    parsed_sections = None
-    try:
-        # Extract the first JSON object (some models may add stray tokens)
-        m = re.search(r"\{[\s\S]*\}", text)
-        if m:
-            obj = json.loads(m.group(0))
-            if isinstance(obj, dict) and "summary" in obj and "advices" in obj:
-                parsed_summary = str(obj["summary"]).strip()
-                adv_list = obj.get("advices") or []
-                if isinstance(adv_list, list):
-                    parsed_advices = []
-                    for a in adv_list:
-                        if isinstance(a, dict):
-                            parsed_advices.append(str(a.get("text", "")).strip())
-                        else:
-                            parsed_advices.append(str(a))
-                    # ensure exactly 3
-                    parsed_advices = parsed_advices[:3]
-                parsed_sections = obj.get("sections")
-    except Exception:
-        parsed_summary = None
-        parsed_advices = None
-
+    parsed_summary, parsed_advices, parsed_sections = _parse_output(text)
     if parsed_summary and parsed_advices and len(parsed_advices) == EXPECTED_ADVICES:
         return InterpretResponse(
             id=reading.id or "",
@@ -267,7 +258,6 @@ def interpret_with_llm(reading: ReadingResponse, lang: str, api_key: str, model:
             llm_used=True,
             sections=parsed_sections if isinstance(parsed_sections, dict) else None,
         )
-
     # Fallback: bullet heuristic
     adv = advices
     if "- " in text:
